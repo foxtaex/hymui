@@ -292,6 +292,12 @@ prototype works reproducibly.
 
 The planned SemVer version of the first development release is `6.0.0-dev.0`.
 
+## Product plans
+
+The active architecture and feature plans live in
+[`docs/hymui`](./docs/hymui/README.md). They describe the Hymui rebuild and no
+longer use the legacy Hatches implementation as their technical foundation.
+
 ## Contributing
 
 At this early stage, feedback is especially useful around:
