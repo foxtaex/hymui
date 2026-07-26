@@ -14,10 +14,9 @@ together on any kind of project. Boards, documents, schedules, links, and agent
 runs belong to one connected project model instead of separate tools.
 
 > [!IMPORTANT]
-> **Hymui is a fresh start.** The legacy code currently present in this
-> repository is based on Astro, React, Prisma, and Tailwind. It does not
-> represent Hymui's target architecture and will not be used as the foundation
-> of the rebuild.
+> **Hymui starts with a new codebase.** It carries forward useful product ideas
+> and lessons from earlier planning experiments, while its architecture and
+> implementation are designed from scratch.
 
 Hymui is currently in its architecture and prototyping phase. There is no
 installable Hymui release yet. This README describes the committed product
@@ -282,9 +281,9 @@ cleanly.
 
 ## Project status
 
-Hymui is currently being rebuilt from the ground up. The existing legacy code
-does not represent the target architecture. Architecture prototypes and
-contract tests come before the production interface.
+Hymui is currently being designed and built from the ground up. Architecture
+prototypes and contract tests come before the production interface. Earlier
+product ideas may return when they fit the new foundations.
 
 There is intentionally no Hymui installation guide yet. Setup, development,
 self-hosting, backup, and update documentation will follow once the technical
@@ -295,8 +294,8 @@ The planned SemVer version of the first development release is `6.0.0-dev.0`.
 ## Product plans
 
 The active architecture and feature plans live in
-[`docs/hymui`](./docs/hymui/README.md). They describe the Hymui rebuild and no
-longer use the legacy Hatches implementation as their technical foundation.
+[`docs/hymui`](./docs/hymui/README.md). They define the current Hymui product
+direction and its new technical foundation.
 
 ## Contributing
 

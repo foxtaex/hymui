@@ -1,7 +1,7 @@
 # Hymui Product Plans
 
 These documents are the active planning source for the Hymui rebuild.
-Legacy implementation details are intentionally excluded.
+Earlier product ideas have been consolidated into this current plan.
 
 ## Foundation
 

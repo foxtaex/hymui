@@ -105,5 +105,5 @@ providers.
 7. Projects, Board, Docs, Planner, and Settings
 8. plugin SDK and federation proof
 
-The legacy Astro, React, Prisma, and Tailwind implementation is not part of
-this architecture.
+The architecture is newly designed, while proven product ideas from earlier
+planning experiments can be carried forward.

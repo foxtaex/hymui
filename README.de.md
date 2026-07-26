@@ -15,10 +15,9 @@ und Agent-Läufe gehören zu einem zusammenhängenden Projektmodell und nicht zu
 voneinander getrennten Werkzeugen.
 
 > [!IMPORTANT]
-> **Hymui ist ein Neustart.** Der aktuell noch im Repository vorhandene
-> Legacy-Code basiert auf Astro, React, Prisma und Tailwind und ist Altbestand.
-> Er entspricht nicht der Zielarchitektur von Hymui und wird nicht als
-> Grundlage für den Neuaufbau weiterentwickelt.
+> **Hymui startet mit einer neuen Codebasis.** Nützliche Produktideen und
+> Erkenntnisse aus früheren Planungsexperimenten fließen ein; Architektur und
+> Implementierung entstehen von Grund auf neu.
 
 Hymui befindet sich derzeit in der Architektur- und Prototypenphase. Es gibt
 noch keine installierbare Hymui-Veröffentlichung. Diese README beschreibt die
@@ -292,9 +291,10 @@ angebaut werden.
 
 ## Projektstatus
 
-Hymui wird aktuell von Grund auf neu aufgebaut. Der vorhandene Legacy-Code
-dient nicht als Zielarchitektur. Architekturprototypen und Contract-Tests kommen
-vor der eigentlichen Produktoberfläche.
+Hymui wird aktuell von Grund auf neu entworfen und entwickelt.
+Architekturprototypen und Contract-Tests kommen vor der eigentlichen
+Produktoberfläche. Frühere Produktideen können auf dem neuen Fundament
+zurückkehren.
 
 Es gibt deshalb derzeit bewusst keine Hymui-Installationsanleitung. Sobald der
 technische Prototyp reproduzierbar funktioniert, werden Setup, Entwicklung,
@@ -305,9 +305,8 @@ Die geplante SemVer-Version des ersten Dev-Releases ist `6.0.0-dev.0`.
 ## Produktpläne
 
 Die aktuellen Architektur- und Feature-Pläne liegen unter
-[`docs/hymui`](./docs/hymui/README.md). Sie beschreiben den Hymui-Neuaufbau und
-verwenden die frühere Hatches-Implementierung nicht mehr als technische
-Grundlage.
+[`docs/hymui`](./docs/hymui/README.md). Sie definieren die aktuelle
+Produktausrichtung von Hymui und ihr neues technisches Fundament.
 
 ## Mitwirken
 
