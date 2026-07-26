@@ -5,6 +5,7 @@ Earlier product ideas have been consolidated into this current plan.
 
 ## Foundation
 
+- [Plan 01 — Foundation](./plans/01-foundation.md)
 - [Architecture](./architecture.md)
 - [Reusable component system](./components.md)
 
@@ -21,8 +22,8 @@ Earlier product ideas have been consolidated into this current plan.
 
 ## Reading order
 
-Start with Architecture, then Components, Projects, Board, Docs, Planner, and
-Settings. Internationalization applies to every feature from its first
+Start with Plan 01, then Architecture, Components, Projects, Board, Docs, Planner,
+and Settings. Internationalization applies to every feature from its first
 implementation.
 
 Plans describe intended behavior, not already shipped functionality. When a
