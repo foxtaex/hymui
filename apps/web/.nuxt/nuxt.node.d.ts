@@ -1,0 +1,13 @@
+/// <reference types="@nuxt/devtools" />
+/// <reference types="@nuxt/telemetry" />
+/// <reference path="types/nitro-layouts.d.ts" />
+/// <reference path="types/modules.d.ts" />
+/// <reference path="types/runtime-config.d.ts" />
+/// <reference path="types/app.config.d.ts" />
+/// <reference types="nuxt" />
+/// <reference path="../../../node_modules/.pnpm/@nuxt+vite-builder@4.5.0_8e2bdeac7cc05c1fad42760a10a66b1f/node_modules/@nuxt/vite-builder/dist/index.d.mts" />
+/// <reference path="../../../node_modules/.pnpm/@nuxt+nitro-server@4.5.0_354b1de94c2e2e753562a0198fdc18ef/node_modules/@nuxt/nitro-server/dist/augments.d.mts" />
+/// <reference path="types/middleware.d.ts" />
+/// <reference path="schema/nuxt.schema.d.ts" />
+
+export {}
