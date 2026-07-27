@@ -1,0 +1,20 @@
+{
+  "name": "@hymui/contracts",
+  "version": "6.0.0-dev.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "0.34.52"
+  },
+  "devDependencies": {
+    "tsup": "8.5.1"
+  }
+}

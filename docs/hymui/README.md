@@ -6,6 +6,7 @@ Earlier product ideas have been consolidated into this current plan.
 ## Foundation
 
 - [Plan 01 — Foundation](./plans/01-foundation.md)
+- [Plan 02 — Persistence and Identity](./plans/02-persistence.md)
 - [Architecture](./architecture.md)
 - [Reusable component system](./components.md)
 

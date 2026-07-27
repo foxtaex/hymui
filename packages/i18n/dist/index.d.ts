@@ -1,11 +1,13 @@
 declare const messages: {
     readonly en: {
         readonly app: {
-            readonly agentStatus: "Agent ready";
+            readonly appearance: "Appearance";
             readonly edition: "Local edition";
             readonly eyebrow: "Local instance · studio north · 7 peers";
             readonly language: "Language";
-            readonly preferences: "Preferences";
+            readonly navigationBottom: "Bottom";
+            readonly navigationPosition: "Navigation position";
+            readonly navigationTop: "Top";
             readonly profile: "Local profile";
             readonly settings: "User settings";
             readonly signOut: "Sign out";
@@ -13,6 +15,8 @@ declare const messages: {
             readonly themeDarkName: "Dark";
             readonly themeLight: "Use light theme";
             readonly themeLightName: "Light";
+            readonly themeSystem: "Follow the system appearance";
+            readonly themeSystemName: "System";
             readonly title: "Projects";
         };
         readonly auth: {
@@ -67,11 +71,13 @@ declare const messages: {
     };
     readonly de: {
         readonly app: {
-            readonly agentStatus: "Agent bereit";
+            readonly appearance: "Darstellung";
             readonly edition: "Local-Edition";
             readonly eyebrow: "Lokale Instanz · studio north · 7 Peers";
             readonly language: "Sprache";
-            readonly preferences: "Einstellungen";
+            readonly navigationBottom: "Unten";
+            readonly navigationPosition: "Position der Navigation";
+            readonly navigationTop: "Oben";
             readonly profile: "Lokales Profil";
             readonly settings: "Benutzereinstellungen";
             readonly signOut: "Abmelden";
@@ -79,6 +85,8 @@ declare const messages: {
             readonly themeDarkName: "Dunkel";
             readonly themeLight: "Helles Theme verwenden";
             readonly themeLightName: "Hell";
+            readonly themeSystem: "Darstellung des Systems verwenden";
+            readonly themeSystemName: "System";
             readonly title: "Projekte";
         };
         readonly auth: {

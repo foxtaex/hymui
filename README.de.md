@@ -19,9 +19,14 @@ voneinander getrennten Werkzeugen.
 > Erkenntnisse aus früheren Planungsexperimenten fließen ein; Architektur und
 > Implementierung entstehen von Grund auf neu.
 
-Hymui befindet sich derzeit in der Architektur- und Prototypenphase. Es gibt
-noch keine installierbare Hymui-Veröffentlichung. Diese README beschreibt die
-verbindliche Produktausrichtung und keine bereits ausgelieferten Funktionen.
+Hymui befindet sich in der aktiven Foundation-Entwicklung. Der aktuelle
+Development-Build enthält die Nuxt-Web-Shell, Fastify-API, einen getrennten
+Worker, gemeinsame Verträge, wiederverwendbare Vue-Komponenten,
+Deutsch/Englisch und das Liquid-Glass-Token-System. Plan 02 ergänzt jetzt den
+ersten persistenten Local-Schnitt: PGlite-Migrationen, Owner- oder
+passwortfreies Local-Profil, sichere persistente Sessions und
+Owner-autorisierte Projekte sowie wiederaufnehmbare Worker-Jobs mit
+persistenten Leases. Das ist noch keine stabile Veröffentlichung.
 
 ## Warum Hymui?
 
@@ -291,14 +296,21 @@ angebaut werden.
 
 ## Projektstatus
 
-Hymui wird aktuell von Grund auf neu entworfen und entwickelt.
-Architekturprototypen und Contract-Tests kommen vor der eigentlichen
-Produktoberfläche. Frühere Produktideen können auf dem neuen Fundament
-zurückkehren.
+Foundation Plan 01 ist als lauffähiges Monorepo umgesetzt. Plan 02 läuft:
+Local speichert jetzt Actors, passwortgestützte oder kontofreie Profile,
+gehashte Sessions und Owner-autorisierte Projekte in PGlite. Login, Logout,
+Projektanlage, Persistenz nach dem Neuladen und die Web → API →
+Worker-Diagnose sind durch automatisierte Integrations- und Browser-Tests
+abgedeckt. Diagnose-Jobs behalten ihre Correlation-ID und werden nach einer
+abgelaufenen Worker-Lease bei einem Neustart wiederaufgenommen.
 
-Es gibt deshalb derzeit bewusst keine Hymui-Installationsanleitung. Sobald der
-technische Prototyp reproduzierbar funktioniert, werden Setup, Entwicklung,
-Self-hosting, Backups und Updates dokumentiert.
+Object-Storage-Adapter, Server-Datenbankadapter, Föderation und produktive
+Deployment-Werkzeuge bleiben bewusst spätere Teilabschnitte.
+
+Entwicklungssetup und Prüfungen sind in
+[`docs/development.md`](./docs/development.md) dokumentiert. Self-hosting,
+Backups, Updates und die Installation für Endnutzer sind noch nicht
+veröffentlicht.
 
 Die geplante SemVer-Version des ersten Dev-Releases ist `6.0.0-dev.0`.
 

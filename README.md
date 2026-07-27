@@ -18,9 +18,13 @@ runs belong to one connected project model instead of separate tools.
 > and lessons from earlier planning experiments, while its architecture and
 > implementation are designed from scratch.
 
-Hymui is currently in its architecture and prototyping phase. There is no
-installable Hymui release yet. This README describes the committed product
-direction, not features that have already shipped.
+Hymui is in active foundation development. The current development build
+provides the Nuxt web shell, Fastify API, separate Worker, shared contracts,
+reusable Vue components, English/German switching, and the Liquid Glass token
+system. Plan 02 now also includes the first durable Local slice: PGlite
+migrations, owner or account-free Local identity, secure persisted sessions,
+owner-authorized Projects, and recoverable Worker jobs with persisted leases.
+It is not a stable release.
 
 ## Why Hymui?
 
@@ -281,13 +285,19 @@ cleanly.
 
 ## Project status
 
-Hymui is currently being designed and built from the ground up. Architecture
-prototypes and contract tests come before the production interface. Earlier
-product ideas may return when they fit the new foundations.
+Foundation Plan 01 is implemented as a runnable monorepo. Plan 02 is in
+progress: Local now persists Actors, password-backed or account-free profiles,
+hashed sessions, and owner-authorized Projects in PGlite. Login, logout,
+Project creation, reload persistence, and the Web → API → Worker diagnostic are
+covered by automated integration and browser tests. Diagnostic jobs retain
+their correlation ID and recover from an expired Worker lease after restart.
 
-There is intentionally no Hymui installation guide yet. Setup, development,
-self-hosting, backup, and update documentation will follow once the technical
-prototype works reproducibly.
+Object-storage adapters, server database adapters, federation, and production
+deployment tooling intentionally remain later slices.
+
+Developer setup and verification are documented in
+[`docs/development.md`](./docs/development.md). Self-hosting, backups, updates,
+and end-user installation are not ready yet.
 
 The planned SemVer version of the first development release is `6.0.0-dev.0`.
 

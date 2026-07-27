@@ -34,6 +34,12 @@
   --color-focus: #0fbfae;
   --color-scrim: rgb(13 18 17 / 50%);
   --color-selection: rgb(15 191 174 / 25%);
+  --glass-base-rgb: 13 18 17;
+  --glass-reflection: rgb(111 191 175 / 16%);
+  --glass-control-fill: rgb(239 235 227 / 6%);
+  --glass-control-hover: rgb(239 235 227 / 10%);
+  --glass-seam: rgb(239 235 227 / 13%);
+  --glass-inner-edge: inset 0 1px 0 rgb(255 255 255 / 13%), inset 0 -1px 0 rgb(0 0 0 / 10%);
   --font-sans: "Quicksand", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --text-display-size: clamp(2.4rem, 5vw, 4.5rem);
@@ -153,6 +159,21 @@
   --color-focus: #2c6a61;
   --color-scrim: rgb(20 26 25 / 32%);
   --color-selection: rgb(15 191 174 / 30%);
+  --glass-base-rgb: 255 255 255;
+  --glass-reflection: rgb(255 255 255 / 68%);
+  --glass-control-fill: rgb(255 255 255 / 34%);
+  --glass-control-hover: rgb(255 255 255 / 52%);
+  --glass-seam: rgb(44 106 97 / 16%);
+  --glass-inner-edge: inset 0 1px 0 rgb(255 255 255 / 82%), inset 0 -1px 0 rgb(44 106 97 / 8%);
+  --glass-alpha-bar: 0.46;
+  --glass-alpha-panel: 0.42;
+  --glass-alpha-overlay: 0.62;
+  --glass-alpha-focus: 0.58;
+  --glass-blur-bar: 28px;
+  --glass-blur-panel: 32px;
+  --glass-blur-overlay: 38px;
+  --glass-blur-focus: 42px;
+  --glass-saturation: 1.28;
   --shadow-1: 0 4px 14px rgb(20 26 25 / 8%);
   --shadow-2: 0 12px 32px rgb(20 26 25 / 12%);
   --shadow-3: 0 20px 52px rgb(20 26 25 / 16%);
@@ -203,6 +224,20 @@
 html {
   min-width: 320px;
   background: var(--color-background);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root[data-theme-transition=active]::view-transition-old(root) {
+  animation: hm-theme-liquid-hold 620ms var(--ease-out) both;
+}
+
+:root[data-theme-transition=active]::view-transition-new(root) {
+  animation: hm-theme-liquid-reveal 620ms var(--ease-out) both;
 }
 
 body {
@@ -262,6 +297,29 @@ pre {
     --motion-base: 0ms;
     --motion-soft: 0ms;
     --motion-depth: 0ms;
+  }
+}
+@keyframes hm-theme-liquid-hold {
+  0%, 54% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.72;
+  }
+}
+@keyframes hm-theme-liquid-reveal {
+  0% {
+    clip-path: circle(0 at var(--theme-transition-x) var(--theme-transition-y));
+    filter: blur(12px) saturate(1.34);
+    transform: scale(1.012);
+  }
+  42% {
+    filter: blur(5px) saturate(1.2);
+  }
+  100% {
+    clip-path: circle(var(--theme-transition-radius) at var(--theme-transition-x) var(--theme-transition-y));
+    filter: none;
+    transform: scale(1);
   }
 }
 @supports not (backdrop-filter: blur(1px)) {

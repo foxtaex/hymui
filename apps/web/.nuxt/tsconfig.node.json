@@ -7,9 +7,6 @@
       "@nuxt/devtools": [
         "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_@electric-sql+pglite@0.3.8_drizzle-orm@0.45.2_@electric-_1c9fcfe5e48da43ef53bb5cb5f7e4d2a/node_modules/@nuxt/devtools"
       ],
-      "vue": [
-        "../../../node_modules/.pnpm/vue@3.5.40_typescript@5.9.3/node_modules/vue"
-      ],
       "@vue/runtime-core": [
         "../../../node_modules/.pnpm/@vue+runtime-core@3.5.40/node_modules/@vue/runtime-core"
       ],
@@ -97,10 +94,10 @@
     "../node_modules",
     "../../../node_modules",
     "../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/node_modules",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_@electric-sql+pglite@0.3.8_drizzle-orm@0.45.2_@electric-_1c9fcfe5e48da43ef53bb5cb5f7e4d2a/node_modules/@nuxt/devtools/node_modules",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@4.5.0_magic-string@1.1.0_magicast@0.5.3_oxc-parser@0.14_f4368fd8c5ef041d1548d472e6fb66b1/node_modules/@nuxt/telemetry/node_modules",
     "../dist",
     "../.data",
+    "../app/**/*",
     "../modules/*/runtime/**/*",
     "../test/nuxt/**/*",
     "../tests/nuxt/**/*",
@@ -109,8 +106,6 @@
     "../modules/*/runtime/server/**/*",
     "../layers/*/server/**/*",
     "../layers/*/modules/*/runtime/server/**/*",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_@electric-sql+pglite@0.3.8_drizzle-orm@0.45.2_@electric-_1c9fcfe5e48da43ef53bb5cb5f7e4d2a/node_modules/runtime",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_@electric-sql+pglite@0.3.8_drizzle-orm@0.45.2_@electric-_1c9fcfe5e48da43ef53bb5cb5f7e4d2a/node_modules/dist/runtime",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@4.5.0_magic-string@1.1.0_magicast@0.5.3_oxc-parser@0.14_f4368fd8c5ef041d1548d472e6fb66b1/node_modules/runtime",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@4.5.0_magic-string@1.1.0_magicast@0.5.3_oxc-parser@0.14_f4368fd8c5ef041d1548d472e6fb66b1/node_modules/dist/runtime"
   ]

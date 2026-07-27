@@ -706,7 +706,9 @@ const _inlineRuntimeConfig = {
       }
     }
   },
-  "public": {}
+  "public": {
+    "apiBase": "http://127.0.0.1:4000"
+  }
 };
 const envOptions = {
   prefix: "NITRO_",
@@ -2071,23 +2073,6 @@ async function errorHandler(error, event) {
   // H3 will handle fallback
 }
 
-const script = `
-if (!window.__NUXT_DEVTOOLS_TIME_METRIC__) {
-  Object.defineProperty(window, '__NUXT_DEVTOOLS_TIME_METRIC__', {
-    value: {},
-    enumerable: false,
-    configurable: true,
-  })
-}
-window.__NUXT_DEVTOOLS_TIME_METRIC__.appInit = Date.now()
-`;
-
-const _DLV2xULOBTz06wWkMUrk_rH7ObccSpWcVdfTVwvW9I = (function(nitro) {
-  nitro.hooks.hook("render:html", (htmlContext) => {
-    htmlContext.head.push(`<script>${script}<\/script>`);
-  });
-});
-
 //#region src/runtime/diagnostics.ts
 const ansi = (open, close) => (s) => `\x1B[${open}m${s}\x1B[${close}m`;
 const colors = {
@@ -2130,7 +2115,7 @@ const serverDiagnostics = /* #__PURE__ */ defineDiagnostics({
 	}
 });
 
-const appHead = {"meta":[{"name":"viewport","content":"width=device-width, initial-scale=1"},{"charset":"utf-8"}],"link":[],"style":[],"script":[],"noscript":[]};
+const appHead = {"meta":[{"name":"viewport","content":"width=device-width, initial-scale=1"},{"charset":"utf-8"},{"name":"theme-color","content":"#0D1211"},{"name":"description","content":"Hymui — local-first project planning for people and AI agents."}],"link":[{"rel":"icon","type":"image/svg+xml","href":"/logo/hymui/hymui-mark-vivid.svg"}],"style":[],"script":[],"noscript":[],"htmlAttrs":{"lang":"en"},"title":"Hymui"};
 
 const appRootTag = "div";
 
@@ -2223,8 +2208,7 @@ function onConsoleLog(callback) {
 }
 
 const plugins = [
-  _DLV2xULOBTz06wWkMUrk_rH7ObccSpWcVdfTVwvW9I,
-dev_server_logs_default,
+  dev_server_logs_default,
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 

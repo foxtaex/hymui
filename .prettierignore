@@ -1,0 +1,11 @@
+.nuxt
+.output
+coverage
+dist
+node_modules
+pnpm-lock.yaml
+Liquid Glass logo system.zip
+Hymui Liquid Glass v2.html
+README.md
+README.de.md
+docs/hymui/**

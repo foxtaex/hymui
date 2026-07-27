@@ -3,7 +3,7 @@
 /// <reference path="app.config.d.ts" />
 /// <reference path="runtime-config.d.ts" />
 /// <reference path="../../../../node_modules/.pnpm/@nuxt+nitro-server@4.5.0_354b1de94c2e2e753562a0198fdc18ef/node_modules/@nuxt/nitro-server/dist/augments.d.mts" />
-/// <reference path="middleware.d.ts" />
+/// <reference path="nitro-middleware.d.ts" />
 
 import type { RuntimeConfig } from 'nuxt/schema'
 import type { H3Event } from 'h3'

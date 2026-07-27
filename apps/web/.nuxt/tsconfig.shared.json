@@ -7,9 +7,6 @@
       "@nuxt/devtools": [
         "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_@electric-sql+pglite@0.3.8_drizzle-orm@0.45.2_@electric-_1c9fcfe5e48da43ef53bb5cb5f7e4d2a/node_modules/@nuxt/devtools"
       ],
-      "vue": [
-        "../../../node_modules/.pnpm/vue@3.5.40_typescript@5.9.3/node_modules/vue"
-      ],
       "@vue/runtime-core": [
         "../../../node_modules/.pnpm/@vue+runtime-core@3.5.40/node_modules/@vue/runtime-core"
       ],
@@ -56,16 +53,16 @@
         "../../../node_modules/.pnpm/crossws@0.4.10_srvx@0.11.22/node_modules/crossws"
       ],
       "~": [
-        ".."
+        "../app"
       ],
       "~/*": [
-        "../*"
+        "../app/*"
       ],
       "@": [
-        ".."
+        "../app"
       ],
       "@/*": [
-        "../*"
+        "../app/*"
       ],
       "~~": [
         ".."
@@ -110,7 +107,7 @@
         "./imports"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev.json"
+        "./manifest/meta/65eee9be-15c7-436d-8b0c-c61d159b8913.json"
       ],
       "#build": [
         "."

@@ -1,9 +1,16 @@
 # Plan 01 — Foundation
 
 > Plan ID: `FND-001`  
-> Status: ready  
+> Status: implemented
 > Target: first implementation milestone  
 > Depends on: [Architecture](../architecture.md)
+
+Implementation verification (2026-07-26):
+
+- `pnpm verify` passes formatting, linting, types, 12 tests, and all builds
+- the browser flow verifies navigation, search, English/German, light/dark
+  themes, and the complete Web → API → Worker diagnostic
+- visual QA passes against `Hymui Liquid Glass v2.html` at `1280 × 720`
 
 ## Outcome
 

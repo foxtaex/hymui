@@ -2,11 +2,13 @@
 var messages = {
   en: {
     app: {
-      agentStatus: "Agent ready",
+      appearance: "Appearance",
       edition: "Local edition",
       eyebrow: "Local instance \xB7 studio north \xB7 7 peers",
       language: "Language",
-      preferences: "Preferences",
+      navigationBottom: "Bottom",
+      navigationPosition: "Navigation position",
+      navigationTop: "Top",
       profile: "Local profile",
       settings: "User settings",
       signOut: "Sign out",
@@ -14,6 +16,8 @@ var messages = {
       themeDarkName: "Dark",
       themeLight: "Use light theme",
       themeLightName: "Light",
+      themeSystem: "Follow the system appearance",
+      themeSystemName: "System",
       title: "Projects"
     },
     auth: {
@@ -68,11 +72,13 @@ var messages = {
   },
   de: {
     app: {
-      agentStatus: "Agent bereit",
+      appearance: "Darstellung",
       edition: "Local-Edition",
       eyebrow: "Lokale Instanz \xB7 studio north \xB7 7 Peers",
       language: "Sprache",
-      preferences: "Einstellungen",
+      navigationBottom: "Unten",
+      navigationPosition: "Position der Navigation",
+      navigationTop: "Oben",
       profile: "Lokales Profil",
       settings: "Benutzereinstellungen",
       signOut: "Abmelden",
@@ -80,6 +86,8 @@ var messages = {
       themeDarkName: "Dunkel",
       themeLight: "Helles Theme verwenden",
       themeLightName: "Hell",
+      themeSystem: "Darstellung des Systems verwenden",
+      themeSystemName: "System",
       title: "Projekte"
     },
     auth: {
