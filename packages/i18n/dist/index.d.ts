@@ -2,11 +2,14 @@ declare const messages: {
     readonly en: {
         readonly app: {
             readonly appearance: "Appearance";
+            readonly colorScheme: "Color scheme";
             readonly edition: "Local edition";
             readonly eyebrow: "Local instance · studio north · 7 peers";
             readonly language: "Language";
             readonly navigationBottom: "Bottom";
-            readonly navigationPosition: "Navigation position";
+            readonly navigationLeft: "Left";
+            readonly navigationPosition: "Desktop navigation position";
+            readonly navigationRight: "Right";
             readonly navigationTop: "Top";
             readonly profile: "Local profile";
             readonly settings: "User settings";
@@ -55,12 +58,18 @@ declare const messages: {
         };
         readonly projects: {
             readonly archive: "Archive 2026";
+            readonly archiveEmpty: "There are no archived projects yet.";
             readonly archivedCount: "Archived projects";
             readonly cancel: "Cancel";
+            readonly clearSearch: "Clear search";
             readonly create: "Create project";
+            readonly created: "Project created.";
             readonly createTitle: "New project";
             readonly description: "Description";
             readonly empty: "Create the first persistent project.";
+            readonly emptySearch: "No matching projects";
+            readonly emptySearchHint: "Try another name or clear the current search.";
+            readonly emptyTitle: "No projects yet";
             readonly new: "New project";
             readonly owner: "Owner";
             readonly progress: "Progress";
@@ -72,11 +81,14 @@ declare const messages: {
     readonly de: {
         readonly app: {
             readonly appearance: "Darstellung";
+            readonly colorScheme: "Farbschema";
             readonly edition: "Local-Edition";
             readonly eyebrow: "Lokale Instanz · studio north · 7 Peers";
             readonly language: "Sprache";
             readonly navigationBottom: "Unten";
-            readonly navigationPosition: "Position der Navigation";
+            readonly navigationLeft: "Links";
+            readonly navigationPosition: "Position der Desktop-Navigation";
+            readonly navigationRight: "Rechts";
             readonly navigationTop: "Oben";
             readonly profile: "Lokales Profil";
             readonly settings: "Benutzereinstellungen";
@@ -125,12 +137,18 @@ declare const messages: {
         };
         readonly projects: {
             readonly archive: "Archiv 2026";
+            readonly archiveEmpty: "Es gibt noch keine archivierten Projekte.";
             readonly archivedCount: "Archivierte Projekte";
             readonly cancel: "Abbrechen";
+            readonly clearSearch: "Suche leeren";
             readonly create: "Projekt erstellen";
+            readonly created: "Projekt wurde erstellt.";
             readonly createTitle: "Neues Projekt";
             readonly description: "Beschreibung";
             readonly empty: "Erstelle das erste persistente Projekt.";
+            readonly emptySearch: "Keine passenden Projekte";
+            readonly emptySearchHint: "Versuche einen anderen Namen oder leere die aktuelle Suche.";
+            readonly emptyTitle: "Noch keine Projekte";
             readonly new: "Neues Projekt";
             readonly owner: "Owner";
             readonly progress: "Fortschritt";

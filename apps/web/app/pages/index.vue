@@ -17,21 +17,29 @@ import {
   HmInput,
   HmLiquidSurface,
   HmPanel,
+  HmSegmentedControl,
   HmSelect,
-  HmSwitch,
   type AppNavItem,
   type AppNavPosition,
+  type SegmentedOption,
 } from "@hymui/ui";
 import {
   Bot,
   CalendarDays,
+  CircleAlert,
+  CircleCheck,
   ChevronRight,
   Columns3,
   FileText,
   Folder,
   LayoutGrid,
   LogOut,
+  Monitor,
   Moon,
+  PanelBottom,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
   PenTool,
   Plus,
   Search,
@@ -59,6 +67,7 @@ const authPassword = ref("");
 const authError = ref("");
 const projects = ref<Project[]>([]);
 const projectsLoading = ref(false);
+const projectCreating = ref(false);
 const newProjectOpen = ref(false);
 const newProjectName = ref("");
 const newProjectDescription = ref("");
@@ -70,6 +79,7 @@ const diagnosticError = ref(false);
 const notice = ref("");
 const settingsOpen = ref(false);
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 let systemThemeQuery: MediaQueryList | undefined;
 
 const nav = computed<ReadonlyArray<AppNavItem>>(() => [
@@ -80,10 +90,20 @@ const nav = computed<ReadonlyArray<AppNavItem>>(() => [
   { icon: PenTool, id: "whiteboard", label: copy.value.nav.whiteboard },
   { icon: Bot, id: "agents", label: copy.value.nav.agents },
 ]);
-const navPositionOptions = computed(() => [
-  { label: copy.value.app.navigationTop, value: "top" },
-  { label: copy.value.app.navigationBottom, value: "bottom" },
+const navPositionOptions = computed<ReadonlyArray<SegmentedOption>>(() => [
+  { icon: PanelTop, label: copy.value.app.navigationTop, value: "top" },
+  { icon: PanelBottom, label: copy.value.app.navigationBottom, value: "bottom" },
+  { icon: PanelLeft, label: copy.value.app.navigationLeft, value: "left" },
+  { icon: PanelRight, label: copy.value.app.navigationRight, value: "right" },
 ]);
+const themeModeOptions = computed<ReadonlyArray<SegmentedOption>>(() => [
+  { icon: Sun, label: copy.value.app.themeLightName, value: "light" },
+  { icon: Monitor, label: copy.value.app.themeSystemName, value: "system" },
+  { icon: Moon, label: copy.value.app.themeDarkName, value: "dark" },
+]);
+const settingsPlacement = computed(() =>
+  navPosition.value === "right" ? "bottom-start" : "bottom-end",
+);
 
 const activeLabel = computed(() => nav.value.find((item) => item.id === active.value)?.label ?? "");
 const filteredProjects = computed(() => {
@@ -249,7 +269,9 @@ async function signOut(): Promise<void> {
 }
 
 async function createProject(): Promise<void> {
+  if (projectCreating.value) return;
   projectError.value = "";
+  projectCreating.value = true;
   try {
     const project = await $fetch<Project>(`${runtime.public.apiBase}/api/v1/projects`, {
       body: {
@@ -263,11 +285,14 @@ async function createProject(): Promise<void> {
     newProjectName.value = "";
     newProjectDescription.value = "";
     newProjectOpen.value = false;
+    showNotice(copy.value.projects.created);
   } catch {
     projectError.value =
       locale.value === "de"
         ? "Das Projekt konnte nicht erstellt werden."
         : "The project could not be created.";
+  } finally {
+    projectCreating.value = false;
   }
 }
 
@@ -282,7 +307,7 @@ function selectLocale(value: string): void {
 }
 
 function selectNavPosition(value: string): void {
-  if (value !== "top" && value !== "bottom") return;
+  if (value !== "top" && value !== "bottom" && value !== "left" && value !== "right") return;
   navPosition.value = value;
   localStorage.setItem("hymui.navPosition", value);
 }
@@ -305,7 +330,7 @@ function applyTheme(nextTheme: ResolvedTheme, animate = true): void {
     return;
   }
 
-  const source = document.querySelector<HTMLElement>('label[for="theme-mode"]');
+  const source = document.querySelector<HTMLElement>(".user-settings__theme-control");
   const bounds = source?.getBoundingClientRect();
   const x = bounds ? bounds.left + bounds.width / 2 : window.innerWidth / 2;
   const y = bounds ? bounds.top + bounds.height / 2 : window.innerHeight / 2;
@@ -333,17 +358,11 @@ function saveThemeMode(mode: ThemeMode): void {
   if (mode !== "system") localStorage.setItem("hymui.theme", mode);
 }
 
-function toggleTheme(useDarkTheme: boolean): void {
-  const nextTheme: ResolvedTheme = useDarkTheme ? "dark" : "light";
-  themeMode.value = nextTheme;
-  saveThemeMode(nextTheme);
-  applyTheme(nextTheme);
-}
-
-function toggleSystemTheme(useSystemTheme: boolean): void {
-  themeMode.value = useSystemTheme ? "system" : theme.value;
+function selectThemeMode(value: string): void {
+  if (value !== "light" && value !== "dark" && value !== "system") return;
+  themeMode.value = value;
   saveThemeMode(themeMode.value);
-  applyTheme(useSystemTheme ? resolvedSystemTheme() : theme.value);
+  applyTheme(value === "system" ? resolvedSystemTheme() : value);
 }
 
 function handleSystemThemeChange(event: MediaQueryListEvent): void {
@@ -355,7 +374,25 @@ function openProject(): void {
 }
 
 function showNewProjectNotice(): void {
+  projectError.value = "";
   newProjectOpen.value = true;
+}
+
+function handleEmptyProjectsAction(): void {
+  if (query.value) {
+    query.value = "";
+    return;
+  }
+  showNewProjectNotice();
+}
+
+function showNotice(message: string): void {
+  if (noticeTimer) clearTimeout(noticeTimer);
+  notice.value = message;
+  noticeTimer = setTimeout(() => {
+    notice.value = "";
+    noticeTimer = undefined;
+  }, 3200);
 }
 
 onMounted(() => {
@@ -370,7 +407,12 @@ onMounted(() => {
   }
   applyTheme(themeMode.value === "system" ? resolvedSystemTheme() : themeMode.value, false);
   const savedNavPosition = localStorage.getItem("hymui.navPosition");
-  if (savedNavPosition === "top" || savedNavPosition === "bottom") {
+  if (
+    savedNavPosition === "top" ||
+    savedNavPosition === "bottom" ||
+    savedNavPosition === "left" ||
+    savedNavPosition === "right"
+  ) {
     navPosition.value = savedNavPosition;
   }
   void loadHealth();
@@ -379,6 +421,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (pollTimer) clearTimeout(pollTimer);
+  if (noticeTimer) clearTimeout(noticeTimer);
   systemThemeQuery?.removeEventListener("change", handleSystemThemeChange);
 });
 </script>
@@ -401,14 +444,14 @@ onBeforeUnmount(() => {
         <HmFloatingWindow
           v-if="settingsOpen"
           class="user-settings__panel"
-          initial-placement="bottom-end"
+          :initial-placement="settingsPlacement"
           :label="copy.app.settings"
           size="sm"
         >
           <template #titlebar>
             <header class="user-settings__header">
               <div class="user-settings__profile">
-                <HmAvatar :name="authSession.actor.displayName" size="lg" />
+                <HmAvatar :name="authSession.actor.displayName" size="md" />
                 <div>
                   <strong>{{ authSession.actor.displayName }}</strong>
                   <span>@{{ authSession.actor.username }}</span>
@@ -440,52 +483,35 @@ onBeforeUnmount(() => {
           <div class="user-settings__field user-settings__field--stacked">
             <span>{{ copy.app.appearance }}</span>
             <div class="user-settings__appearance">
-              <div class="user-settings__appearance-row">
+              <div
+                class="user-settings__appearance-row user-settings__appearance-row--desktop-navigation user-settings__appearance-row--stacked"
+              >
                 <span>{{ copy.app.navigationPosition }}</span>
-                <HmSelect
+                <HmSegmentedControl
                   id="navigation-position"
+                  class="user-settings__navigation-control"
                   :label="copy.app.navigationPosition"
                   :model-value="navPosition"
                   :options="navPositionOptions"
-                  hide-label
                   @update:model-value="selectNavPosition"
                 />
               </div>
 
-              <div class="user-settings__appearance-row">
-                <div
-                  class="user-settings__theme"
-                  :class="{ 'user-settings__theme--disabled': themeMode === 'system' }"
-                >
-                  <Sun :size="16" :stroke-width="1.5" aria-hidden="true" />
-                  <span>{{ copy.app.themeLightName }}</span>
-                  <HmSwitch
-                    id="theme-mode"
-                    :disabled="themeMode === 'system'"
-                    :label="theme === 'dark' ? copy.app.themeDark : copy.app.themeLight"
-                    :model-value="theme === 'dark'"
-                    hide-label
-                    @update:model-value="toggleTheme"
-                  />
-                  <Moon :size="16" :stroke-width="1.5" aria-hidden="true" />
-                  <span>{{ copy.app.themeDarkName }}</span>
-                </div>
-              </div>
-
-              <div class="user-settings__appearance-row">
-                <span>{{ copy.app.themeSystemName }}</span>
-                <HmSwitch
-                  id="theme-system-mode"
-                  :label="copy.app.themeSystem"
-                  :model-value="themeMode === 'system'"
-                  hide-label
-                  @update:model-value="toggleSystemTheme"
+              <div class="user-settings__appearance-row user-settings__appearance-row--stacked">
+                <span>{{ copy.app.colorScheme }}</span>
+                <HmSegmentedControl
+                  id="theme-mode"
+                  class="user-settings__theme-control"
+                  :label="copy.app.colorScheme"
+                  :model-value="themeMode"
+                  :options="themeModeOptions"
+                  @update:model-value="selectThemeMode"
                 />
               </div>
             </div>
           </div>
 
-          <HmButton variant="secondary" @click="signOut">
+          <HmButton size="md" variant="secondary" @click="signOut">
             <template #icon>
               <LogOut :size="16" :stroke-width="1.5" />
             </template>
@@ -530,7 +556,7 @@ onBeforeUnmount(() => {
           <HmButton variant="secondary" @click="newProjectOpen = false">
             {{ copy.projects.cancel }}
           </HmButton>
-          <HmButton :disabled="!newProjectName.trim()" type="submit">
+          <HmButton :disabled="!newProjectName.trim()" :loading="projectCreating" type="submit">
             {{ copy.projects.create }}
           </HmButton>
         </div>
@@ -626,15 +652,25 @@ onBeforeUnmount(() => {
           </div>
         </header>
 
-        <p v-if="notice || projectError" class="projects-notice" role="status">
-          {{ projectError || notice }}
-        </p>
+        <Transition name="projects-notice">
+          <p
+            v-if="notice || projectError"
+            class="projects-notice"
+            :class="{ 'projects-notice--error': projectError }"
+            :role="projectError ? 'alert' : 'status'"
+            aria-live="polite"
+          >
+            <CircleAlert v-if="projectError" :size="16" :stroke-width="1.7" aria-hidden="true" />
+            <CircleCheck v-else :size="16" :stroke-width="1.7" aria-hidden="true" />
+            <span>{{ projectError || notice }}</span>
+          </p>
+        </Transition>
 
         <HmButton
           class="archive-row"
           size="md"
           variant="quiet"
-          @click="notice = copy.projects.archive"
+          @click="showNotice(copy.projects.archiveEmpty)"
         >
           <template #icon>
             <Folder :size="17" :stroke-width="1.5" />
@@ -648,9 +684,16 @@ onBeforeUnmount(() => {
 
         <section class="project-grid" :aria-label="copy.projects.region">
           <p v-if="projectsLoading" class="projects-empty">{{ copy.health.checking }}</p>
-          <p v-else-if="activeProjects.length === 0" class="projects-empty">
-            {{ copy.projects.empty }}
-          </p>
+          <div v-else-if="activeProjects.length === 0" class="projects-empty">
+            <span class="projects-empty__icon" aria-hidden="true">
+              <Folder :size="22" :stroke-width="1.5" />
+            </span>
+            <strong>{{ query ? copy.projects.emptySearch : copy.projects.emptyTitle }}</strong>
+            <p>{{ query ? copy.projects.emptySearchHint : copy.projects.empty }}</p>
+            <HmButton size="md" variant="secondary" @click="handleEmptyProjectsAction">
+              {{ query ? copy.projects.clearSearch : copy.projects.new }}
+            </HmButton>
+          </div>
           <HmPanel
             v-for="project in activeProjects"
             :key="project.id"

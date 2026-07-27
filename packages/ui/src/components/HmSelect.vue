@@ -100,6 +100,12 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPoin
       <span>{{ selected?.label ?? label }}</span>
       <ChevronDown :size="16" :stroke-width="1.5" aria-hidden="true" />
     </button>
+    <div
+      v-if="open"
+      class="hm-select__backdrop"
+      aria-hidden="true"
+      @pointerdown.prevent.stop="close"
+    />
     <Transition name="hm-depth">
       <div
         v-if="open"
@@ -107,6 +113,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPoin
         class="hm-select__list"
         role="listbox"
         :aria-label="label"
+        @pointerdown.stop
       >
         <button
           v-for="(option, index) in options"

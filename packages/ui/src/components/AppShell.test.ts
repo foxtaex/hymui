@@ -27,6 +27,12 @@ describe("AppShell", () => {
 
     expect(wrapper.classes()).toContain("hm-app-shell--nav-top");
     expect(wrapper.classes()).not.toContain("hm-app-shell--nav-bottom");
+
+    await wrapper.setProps({ navPosition: "left" });
+    expect(wrapper.classes()).toContain("hm-app-shell--nav-left");
+
+    await wrapper.setProps({ navPosition: "right" });
+    expect(wrapper.classes()).toContain("hm-app-shell--nav-right");
   });
 
   it("exposes the active mobile item index for the sliding indicator", async () => {

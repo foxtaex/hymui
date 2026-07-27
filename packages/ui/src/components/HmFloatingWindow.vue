@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { GripHorizontal } from "@lucide/vue";
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  useTemplateRef,
+  watch,
+} from "vue";
 
 import HmLiquidSurface from "./HmLiquidSurface.vue";
 
@@ -108,6 +117,11 @@ onMounted(() => {
   void placeWindow();
   window.addEventListener("resize", onResize);
 });
+
+watch(
+  () => props.initialPlacement,
+  () => void placeWindow(),
+);
 
 onBeforeUnmount(() => {
   stopDragging();

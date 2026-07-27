@@ -22,6 +22,12 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   await expect(profileAction).toHaveClass(/user-settings__trigger--active/);
   await expect(profileAction).toHaveCSS("color", "rgb(13, 18, 17)");
   await expect(page.locator(".user-settings__appearance")).toBeVisible();
+  await expect(page.locator(".user-settings__profile .hm-avatar")).toHaveCSS("width", "28px");
+  await expect(page.locator(".user-settings__panel .hm-segmented").first()).toHaveCSS(
+    "min-height",
+    "36px",
+  );
+  await expect(page.getByRole("button", { name: "Sign out" })).toHaveCSS("min-height", "36px");
   await expect(page.locator(".user-settings__status")).toHaveCount(0);
   await expect(page.getByText("Agent ready", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Agent bereit", { exact: true })).toHaveCount(0);
@@ -42,15 +48,15 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
     )
     .toContain("blur");
 
-  await page.locator('label[for="theme-mode"]').click();
+  await page.getByRole("radio", { name: "Light" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 
-  await page.locator('label[for="theme-system-mode"]').click();
+  await page.getByRole("radio", { name: "System" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("#theme-mode")).toBeDisabled();
+  await expect(page.getByRole("radio", { name: "System" })).toHaveAttribute("aria-checked", "true");
 
-  await page.locator('label[for="theme-system-mode"]').click();
-  await expect(page.locator("#theme-mode")).toBeEnabled();
+  await page.getByRole("radio", { name: "Dark" }).click();
+  await expect(page.getByRole("radio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
 
   const floatingWindow = page.locator(".hm-floating-window");
   const titlebar = page.locator(".hm-floating-window__titlebar");
@@ -71,13 +77,32 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   await page.getByRole("option", { name: "English" }).click();
   await expect(projectsHeading).toBeVisible();
 
-  await page.locator("#navigation-position").click();
-  await page.getByRole("option", { name: "Top" }).click();
+  await page.getByRole("radio", { name: "Right" }).click();
+  await expect(page.locator(".hm-app-shell")).toHaveClass(/hm-app-shell--nav-right/);
+  await expect(page.locator(".hm-app-shell__bar")).toHaveCSS("flex-direction", "column");
+  await expect(page.locator(".hm-app-shell__bar .hm-brand > span")).toBeHidden();
+  await expect(page.getByRole("radio", { name: "Right" })).toHaveAttribute("aria-checked", "true");
+  await expect
+    .poll(async () => (await floatingWindow.boundingBox())?.x ?? Number.POSITIVE_INFINITY)
+    .toBeLessThan(80);
+
+  await expect(page.locator("#navigation-position-listbox")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+
+  await page.getByRole("radio", { name: "Top" }).click();
   await expect(page.locator(".hm-app-shell")).toHaveClass(/hm-app-shell--nav-top/);
 
   await page.reload();
   await expect(projectsHeading).toBeVisible();
   await expect(page.locator(".hm-app-shell")).toHaveClass(/hm-app-shell--nav-top/);
+
+  await page.getByRole("button", { name: "Archive 2026" }).click();
+  await expect(page.getByText("There are no archived projects yet.")).toBeVisible();
+
+  await page.locator("#project-search").fill("project-that-does-not-exist");
+  await expect(page.getByText("No matching projects")).toBeVisible();
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(page.locator("#project-search")).toHaveValue("");
 
   await expect(page.getByText("All services ready")).toBeVisible();
 
@@ -119,6 +144,14 @@ test("allows the mobile navigation to slide horizontally", async ({ page }) => {
 
   const mobileNavigation = page.locator(".hm-app-shell__mobile-nav");
   await expect(mobileNavigation).toBeVisible();
+  const profileAction = page.getByTestId("user-settings-action");
+  await profileAction.click();
+  await expect(page.getByText("Desktop navigation position", { exact: true })).toBeHidden();
+  await expect(page.getByRole("radio", { name: "Top" })).toBeHidden();
+  await expect(mobileNavigation).toHaveCSS("bottom", "12px");
+  await expect(page.locator(".hm-app-shell__bar-wrap")).toHaveCSS("top", "8px");
+  await profileAction.click();
+
   await expect(mobileNavigation).toHaveCSS("overflow-x", "auto");
   await expect(mobileNavigation).toHaveCSS("scroll-snap-type", "inline mandatory");
   await expect(mobileNavigation).toHaveCSS("--hm-mobile-active-index", "0");

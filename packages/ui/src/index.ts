@@ -10,8 +10,10 @@ export { default as HmLiquidSurface } from "./components/HmLiquidSurface.vue";
 export { default as HmNavItem } from "./components/HmNavItem.vue";
 export { default as HmPanel } from "./components/HmPanel.vue";
 export { default as HmProgress } from "./components/HmProgress.vue";
+export { default as HmSegmentedControl } from "./components/HmSegmentedControl.vue";
 export { default as HmSelect } from "./components/HmSelect.vue";
 export { default as HmSwitch } from "./components/HmSwitch.vue";
 
 export type { AppNavItem, AppNavPosition } from "./components/AppShell.vue";
+export type { SegmentedOption } from "./components/HmSegmentedControl.vue";
 export type { SelectOption } from "./components/HmSelect.vue";

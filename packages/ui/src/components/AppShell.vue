@@ -7,7 +7,7 @@ export interface AppNavItem {
   label: string;
 }
 
-export type AppNavPosition = "bottom" | "top";
+export type AppNavPosition = "bottom" | "left" | "right" | "top";
 </script>
 
 <script setup lang="ts">
@@ -36,18 +36,22 @@ const activeIndex = computed(() =>
 );
 const desktopNav = ref<HTMLElement | null>(null);
 const desktopIndicatorReady = ref(false);
+const desktopIndicatorHeight = ref(0);
 const desktopIndicatorWidth = ref(0);
 const desktopIndicatorX = ref(0);
+const desktopIndicatorY = ref(0);
 let desktopNavResizeObserver: ResizeObserver | undefined;
 
 function updateDesktopIndicator(): void {
   const activeItem = desktopNav.value?.querySelector<HTMLElement>(
     ".hm-app-shell__nav-item--active",
   );
-  if (!activeItem || activeItem.offsetWidth === 0) return;
+  if (!activeItem || activeItem.offsetWidth === 0 || activeItem.offsetHeight === 0) return;
 
+  desktopIndicatorHeight.value = activeItem.offsetHeight;
   desktopIndicatorWidth.value = activeItem.offsetWidth;
   desktopIndicatorX.value = activeItem.offsetLeft;
+  desktopIndicatorY.value = activeItem.offsetTop;
   desktopIndicatorReady.value = true;
 }
 
@@ -86,8 +90,10 @@ defineEmits<{
           <span
             class="hm-app-shell__nav-indicator"
             :style="{
+              '--hm-nav-indicator-height': `${desktopIndicatorHeight}px`,
               '--hm-nav-indicator-width': `${desktopIndicatorWidth}px`,
               '--hm-nav-indicator-x': `${desktopIndicatorX}px`,
+              '--hm-nav-indicator-y': `${desktopIndicatorY}px`,
             }"
             aria-hidden="true"
           />
