@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Project } from "@hymui/contracts";
 import { HmButton, HmFloatingWindow, HmIconButton, HmInput } from "@hymui/ui";
-import { Trash2, TriangleAlert, X } from "@lucide/vue";
+import { ClipboardPaste, Trash2, TriangleAlert, X } from "@lucide/vue";
 
 const props = defineProps<{
   error: string;
@@ -18,6 +18,11 @@ const { copy } = useHymuiI18n();
 const confirmation = ref("");
 const submitted = ref(false);
 const matches = computed(() => confirmation.value === props.project.name);
+
+function useProjectName(): void {
+  confirmation.value = props.project.name;
+  submitted.value = false;
+}
 
 function submit(): void {
   submitted.value = true;
@@ -45,14 +50,28 @@ function submit(): void {
       </header>
     </template>
 
-    <form class="delete-project-window__form" novalidate @submit.prevent="submit">
+    <form
+      class="delete-project-window__form"
+      novalidate
+      @keydown.stop
+      @pointerdown.stop
+      @submit.prevent="submit"
+    >
       <div class="delete-project-window__warning">
         <TriangleAlert :size="19" :stroke-width="1.6" aria-hidden="true" />
         <p>{{ copy.projects.deleteWarning }}</p>
       </div>
       <p class="delete-project-window__confirmation">
         {{ copy.projects.deleteConfirmation }}
-        <strong>{{ project.name }}</strong>
+        <span class="delete-project-window__project-name">
+          <strong>{{ project.name }}</strong>
+          <HmButton size="sm" variant="secondary" @click.stop="useProjectName">
+            <template #icon>
+              <ClipboardPaste :size="15" :stroke-width="1.6" />
+            </template>
+            {{ copy.projects.deleteUseName }}
+          </HmButton>
+        </span>
       </p>
       <HmInput
         id="delete-project-name"

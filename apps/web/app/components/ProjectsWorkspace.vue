@@ -40,7 +40,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   archive: [project: Project];
   create: [];
-  delete: [project: Project];
+  deleteProject: [input: { name: string; project: Project; revision: number }];
   edit: [project: Project];
   open: [project: Project];
   restore: [project: Project];
@@ -50,6 +50,9 @@ const emit = defineEmits<{
 const { copy, locale } = useHymuiI18n();
 const query = ref("");
 const archiveOpen = ref(false);
+const deleteProjectId = ref<string | null>(null);
+const deleteConfirmation = ref("");
+const deleteSubmitted = ref(false);
 
 const filteredProjects = computed(() => {
   const needle = query.value.trim().toLowerCase();
@@ -99,6 +102,28 @@ function handleEmptyAction(): void {
 
 function isUpdating(project: Project): boolean {
   return props.updatingProjectIds.includes(project.id);
+}
+
+function showDeleteConfirmation(project: Project): void {
+  deleteProjectId.value = project.id;
+  deleteConfirmation.value = "";
+  deleteSubmitted.value = false;
+}
+
+function closeDeleteConfirmation(): void {
+  deleteProjectId.value = null;
+  deleteConfirmation.value = "";
+  deleteSubmitted.value = false;
+}
+
+function submitDelete(project: Project): void {
+  deleteSubmitted.value = true;
+  if (deleteConfirmation.value !== project.name) return;
+  emit("deleteProject", {
+    name: deleteConfirmation.value,
+    project,
+    revision: project.revision,
+  });
 }
 </script>
 
@@ -202,12 +227,66 @@ function isUpdating(project: Project): boolean {
                   :label="copy.projects.deleteProject"
                   size="sm"
                   variant="danger"
-                  @click="emit('delete', project)"
+                  @click.stop="showDeleteConfirmation(project)"
                 >
                   <Trash2 :size="15" :stroke-width="1.6" />
                 </HmIconButton>
               </div>
             </div>
+            <form
+              v-if="deleteProjectId === project.id"
+              class="project-card__delete-confirmation"
+              novalidate
+              @submit.prevent="submitDelete(project)"
+            >
+              <div class="project-card__delete-warning">
+                <Trash2 :size="17" :stroke-width="1.6" aria-hidden="true" />
+                <div>
+                  <strong>{{ copy.projects.deleteTitle }}</strong>
+                  <p>{{ copy.projects.deleteWarning }}</p>
+                </div>
+              </div>
+              <p class="project-card__delete-instruction">
+                {{ copy.projects.deleteConfirmation }}
+                <strong>{{ project.name }}</strong>
+              </p>
+              <HmInput
+                :id="`archive-delete-${project.id}`"
+                v-model="deleteConfirmation"
+                autocomplete="off"
+                :disabled="isUpdating(project)"
+                :error="
+                  deleteSubmitted && deleteConfirmation !== project.name
+                    ? copy.projects.deleteConfirmationMismatch
+                    : ''
+                "
+                :label="copy.projects.deleteNameLabel"
+                :maxlength="120"
+                required
+              />
+              <div class="project-card__delete-actions">
+                <HmButton
+                  :disabled="isUpdating(project)"
+                  size="sm"
+                  variant="secondary"
+                  @click="closeDeleteConfirmation"
+                >
+                  {{ copy.projects.cancel }}
+                </HmButton>
+                <HmButton
+                  :disabled="deleteConfirmation !== project.name"
+                  :loading="isUpdating(project)"
+                  size="sm"
+                  type="submit"
+                  variant="danger"
+                >
+                  <template #icon>
+                    <Trash2 :size="15" :stroke-width="1.6" />
+                  </template>
+                  {{ copy.projects.deleteProject }}
+                </HmButton>
+              </div>
+            </form>
             <div class="project-card__meta">
               <span>{{ formatProjectDate(project.updatedAt) }}</span>
               <span class="project-card__dot" aria-hidden="true" />

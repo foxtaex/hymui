@@ -187,9 +187,17 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
     .locator(".delete-project-window")
     .getByRole("button", { name: /Delete project|Projekt löschen/ });
   await expect(deleteProjectAction).toBeDisabled();
-  await page.locator("#delete-project-name").fill(`${deleteProjectName} `);
+  const deleteProjectNameInput = page.locator("#delete-project-name");
+  await deleteProjectNameInput.fill(`${deleteProjectName} `);
   await expect(deleteProjectAction).toBeDisabled();
-  await page.locator("#delete-project-name").fill(deleteProjectName);
+  await deleteProjectNameInput.fill("");
+  await page
+    .locator(".delete-project-window")
+    .getByRole("button", { name: /Use project name|Projektnamen übernehmen/ })
+    .click();
+  await expect(page.locator(".delete-project-window")).toBeVisible();
+  await expect(deleteProjectNameInput).toHaveValue(deleteProjectName);
+  await expect(page.locator(".delete-project-window")).toBeVisible();
   await expect(deleteProjectAction).toBeEnabled();
   await deleteProjectAction.click();
   await expect(page.locator(".delete-project-window")).toHaveCount(0);
