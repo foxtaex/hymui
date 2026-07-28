@@ -9,14 +9,21 @@ export interface SegmentedOption {
 </script>
 
 <script setup lang="ts">
+import { motion } from "motion-v";
 import { computed } from "vue";
 
-const props = defineProps<{
-  id: string;
-  label: string;
-  modelValue: string;
-  options: ReadonlyArray<SegmentedOption>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    id: string;
+    label: string;
+    modelValue: string;
+    options: ReadonlyArray<SegmentedOption>;
+    disabled?: boolean;
+  }>(),
+  {
+    disabled: false,
+  },
+);
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
@@ -30,10 +37,12 @@ const activeIndex = computed(() =>
 );
 
 function select(value: string): void {
+  if (props.disabled) return;
   emit("update:modelValue", value);
 }
 
 function onKeydown(event: KeyboardEvent, index: number): void {
+  if (props.disabled) return;
   if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
   event.preventDefault();
 
@@ -65,13 +74,20 @@ function onKeydown(event: KeyboardEvent, index: number): void {
       '--hm-segment-index': activeIndex,
     }"
   >
-    <span class="hm-segmented__indicator" aria-hidden="true" />
+    <motion.span
+      class="hm-segmented__indicator"
+      :initial="false"
+      :animate="{ x: `${activeIndex * 100}%` }"
+      :transition="{ type: 'spring', stiffness: 420, damping: 34, mass: 0.72 }"
+      aria-hidden="true"
+    />
     <button
       v-for="(option, index) in options"
       :id="`${id}-${option.value}`"
       :key="option.value"
       class="hm-segmented__option"
       :class="{ 'hm-segmented__option--active': option.value === modelValue }"
+      :disabled="disabled"
       type="button"
       role="radio"
       :aria-checked="option.value === modelValue"

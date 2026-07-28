@@ -31,6 +31,7 @@ export const projects = pgTable("projects", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
   description: text("description").notNull().default(""),
   id: text("id").primaryKey(),
+  linksJson: text("links_json").notNull().default("[]"),
   name: text("name").notNull(),
   ownerId: text("owner_id")
     .notNull()

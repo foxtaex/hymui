@@ -26,6 +26,16 @@ function errorResponse(correlationId: string, code: string, message: string): Er
   return { code, correlationId, message };
 }
 
+function normalizedLinks(
+  links: ReadonlyArray<{ kind: "external" | "repository"; label: string; url: string }> | undefined,
+) {
+  return links?.map((link) => ({
+    kind: link.kind,
+    label: link.label.trim(),
+    url: link.url.trim(),
+  }));
+}
+
 export async function registerProjectRoutes(
   app: FastifyInstance,
   database: HymuiDatabase,
@@ -61,6 +71,7 @@ export async function registerProjectRoutes(
         body: CreateProjectRequestSchema,
         response: {
           201: ProjectSchema,
+          400: ErrorResponseSchema,
           401: ErrorResponseSchema,
         },
       },
@@ -73,11 +84,23 @@ export async function registerProjectRoutes(
           .status(401)
           .send(errorResponse(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
+      if (!request.body.name.trim()) {
+        return reply
+          .status(400)
+          .send(errorResponse(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required."));
+      }
+      const links = normalizedLinks(request.body.links);
+      if (links?.some((link) => !link.label)) {
+        return reply
+          .status(400)
+          .send(errorResponse(correlationId, "PROJECT_LINK_INVALID", "Link labels are required."));
+      }
       const project = await database.projects.create({
         ...(request.body.description === undefined
           ? {}
           : { description: request.body.description }),
         id: randomUUID(),
+        ...(links === undefined ? {} : { links }),
         name: request.body.name.trim(),
         ownerId: actor.id,
         timestamp: new Date(),
@@ -94,6 +117,7 @@ export async function registerProjectRoutes(
         params: ProjectParamsSchema,
         response: {
           200: ProjectSchema,
+          400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           404: ErrorResponseSchema,
           409: ErrorResponseSchema,
@@ -109,9 +133,26 @@ export async function registerProjectRoutes(
           .send(errorResponse(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
       try {
+        if (request.body.name !== undefined && !request.body.name.trim()) {
+          return reply
+            .status(400)
+            .send(
+              errorResponse(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required."),
+            );
+        }
+        const links = normalizedLinks(request.body.links);
+        if (links?.some((link) => !link.label)) {
+          return reply
+            .status(400)
+            .send(
+              errorResponse(correlationId, "PROJECT_LINK_INVALID", "Link labels are required."),
+            );
+        }
         const project = await database.projects.update({
           ...request.body,
           id: request.params.id,
+          ...(links === undefined ? {} : { links }),
+          ...(request.body.name === undefined ? {} : { name: request.body.name.trim() }),
           ownerId: actor.id,
           timestamp: new Date(),
         });

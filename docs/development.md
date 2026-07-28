@@ -96,6 +96,24 @@ stores, AI providers, or repository hosts directly.
 All visual styles live in standalone SCSS. Vue and TypeScript files do not contain local style
 blocks or CSS strings.
 
+## Animation standard
+
+Use [Motion for Vue](https://motion.dev/docs/vue) (`motion-v`) for stateful product animation:
+
+- layout and shared-layout transitions
+- enter and exit orchestration
+- drag, press, hover, and touch gestures
+- reorderable content
+- scroll-linked or interruptible animation
+- spring-based Liquid Glass movement
+
+Keep static colors, spacing, typography, surfaces, and responsive layout in standalone SCSS. Simple
+self-contained effects such as a color change on hover remain CSS transitions. Do not duplicate the
+same interaction in Motion and CSS.
+
+Every Motion interaction must respect reduced-motion preferences. Prefer transform and opacity, keep
+animation interruptible, and never delay access to content or actions until an animation finishes.
+
 ## Environment
 
 Copy `.env.example` for the documented development defaults. Runtime configuration is validated

@@ -2,6 +2,7 @@ export { default as AppShell } from "./components/AppShell.vue";
 export { default as HmAvatar } from "./components/HmAvatar.vue";
 export { default as HmBadge } from "./components/HmBadge.vue";
 export { default as HmBrand } from "./components/HmBrand.vue";
+export { default as HmBrandMark } from "./components/HmBrandMark.vue";
 export { default as HmButton } from "./components/HmButton.vue";
 export { default as HmFloatingWindow } from "./components/HmFloatingWindow.vue";
 export { default as HmIconButton } from "./components/HmIconButton.vue";

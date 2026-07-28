@@ -11,6 +11,7 @@ declare global {
   const clearNuxtState: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/state').clearNuxtState
   const computed: typeof import('vue').computed
   const createError: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/error').createError
+  const createPresetDirective: typeof import('motion-v').createPresetDirective
   const createUseAsyncData: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData').createUseAsyncData
   const createUseFetch: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch').createUseFetch
   const customRef: typeof import('vue').customRef
@@ -97,6 +98,8 @@ declare global {
   const tryUseNuxtApp: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/nuxt').tryUseNuxtApp
   const unref: typeof import('vue').unref
   const updateAppConfig: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/config').updateAppConfig
+  const useAnimate: typeof import('motion-v').useAnimate
+  const useAnimationFrame: typeof import('motion-v').useAnimationFrame
   const useAnnouncer: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/announcer').useAnnouncer
   const useAppConfig: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/config').useAppConfig
   const useAsyncData: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData').useAsyncData
@@ -104,6 +107,7 @@ declare global {
   const useCookie: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/cookie').useCookie
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
+  const useDragControls: typeof import('motion-v').useDragControls
   const useError: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/error').useError
   const useFetch: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch').useFetch
   const useHead: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head').useHead
@@ -111,15 +115,21 @@ declare global {
   const useHydration: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/hydrate').useHydration
   const useHymuiI18n: typeof import('../../app/composables/useHymuiI18n').useHymuiI18n
   const useId: typeof import('vue').useId
+  const useInView: typeof import('motion-v').useInView
   const useLayout: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/layout').useLayout
+  const useLayoutGroup: typeof import('motion-v').useLayoutGroup
   const useLazyAsyncData: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData').useLazyAsyncData
   const useLazyFetch: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch').useLazyFetch
   const useLink: typeof import('../../../../node_modules/.pnpm/vue-router@5.2.0_@vue+compiler-sfc@3.5.40_esbuild@0.28.1_rolldown@1.2.0_rollup@4.62.2_v_2627815252091e0ca3893dc07ef49e70/node_modules/vue-router').useLink
   const useLoadingIndicator: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/loading-indicator').useLoadingIndicator
   const useModel: typeof import('vue').useModel
+  const useMotionTemplate: typeof import('motion-v').useMotionTemplate
+  const useMotionValue: typeof import('motion-v').useMotionValue
+  const useMotionValueEvent: typeof import('motion-v').useMotionValueEvent
   const useNuxtApp: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/nuxt').useNuxtApp
   const useNuxtData: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData').useNuxtData
   const usePreviewMode: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/preview').usePreviewMode
+  const useReducedMotion: typeof import('motion-v').useReducedMotion
   const useRequestEvent: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr').useRequestEvent
   const useRequestFetch: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr').useRequestFetch
   const useRequestHeader: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr').useRequestHeader
@@ -174,15 +184,21 @@ declare global {
   const useScriptVimeoPlayer: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs').useScriptVimeoPlayer
   const useScriptXPixel: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs').useScriptXPixel
   const useScriptYouTubePlayer: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs').useScriptYouTubePlayer
+  const useScroll: typeof import('motion-v').useScroll
   const useSeoMeta: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head').useSeoMeta
   const useServerHead: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head').useServerHead
   const useServerHeadSafe: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head').useServerHeadSafe
   const useServerSeoMeta: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head').useServerSeoMeta
   const useShadowRoot: typeof import('vue').useShadowRoot
   const useSlots: typeof import('vue').useSlots
+  const useSpring: typeof import('motion-v').useSpring
   const useState: typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/state').useState
   const useTemplateRef: typeof import('vue').useTemplateRef
+  const useTime: typeof import('motion-v').useTime
+  const useTransform: typeof import('motion-v').useTransform
   const useTransitionState: typeof import('vue').useTransitionState
+  const useVelocity: typeof import('motion-v').useVelocity
+  const vMotion: typeof import('motion-v').vMotion
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect
@@ -217,6 +233,7 @@ declare module 'vue' {
     readonly clearNuxtState: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/state')['clearNuxtState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createError: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/error')['createError']>
+    readonly createPresetDirective: UnwrapRef<typeof import('motion-v')['createPresetDirective']>
     readonly createUseAsyncData: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData')['createUseAsyncData']>
     readonly createUseFetch: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch')['createUseFetch']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
@@ -303,6 +320,8 @@ declare module 'vue' {
     readonly tryUseNuxtApp: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/nuxt')['tryUseNuxtApp']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly updateAppConfig: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/config')['updateAppConfig']>
+    readonly useAnimate: UnwrapRef<typeof import('motion-v')['useAnimate']>
+    readonly useAnimationFrame: UnwrapRef<typeof import('motion-v')['useAnimationFrame']>
     readonly useAnnouncer: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/announcer')['useAnnouncer']>
     readonly useAppConfig: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/config')['useAppConfig']>
     readonly useAsyncData: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData')['useAsyncData']>
@@ -310,6 +329,7 @@ declare module 'vue' {
     readonly useCookie: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/cookie')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useDragControls: UnwrapRef<typeof import('motion-v')['useDragControls']>
     readonly useError: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/error')['useError']>
     readonly useFetch: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch')['useFetch']>
     readonly useHead: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head')['useHead']>
@@ -317,15 +337,21 @@ declare module 'vue' {
     readonly useHydration: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/hydrate')['useHydration']>
     readonly useHymuiI18n: UnwrapRef<typeof import('../../app/composables/useHymuiI18n')['useHymuiI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useInView: UnwrapRef<typeof import('motion-v')['useInView']>
     readonly useLayout: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/layout')['useLayout']>
+    readonly useLayoutGroup: UnwrapRef<typeof import('motion-v')['useLayoutGroup']>
     readonly useLazyAsyncData: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData')['useLazyAsyncData']>
     readonly useLazyFetch: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/fetch')['useLazyFetch']>
     readonly useLink: UnwrapRef<typeof import('../../../../node_modules/.pnpm/vue-router@5.2.0_@vue+compiler-sfc@3.5.40_esbuild@0.28.1_rolldown@1.2.0_rollup@4.62.2_v_2627815252091e0ca3893dc07ef49e70/node_modules/vue-router')['useLink']>
     readonly useLoadingIndicator: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/loading-indicator')['useLoadingIndicator']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useMotionTemplate: UnwrapRef<typeof import('motion-v')['useMotionTemplate']>
+    readonly useMotionValue: UnwrapRef<typeof import('motion-v')['useMotionValue']>
+    readonly useMotionValueEvent: UnwrapRef<typeof import('motion-v')['useMotionValueEvent']>
     readonly useNuxtApp: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/nuxt')['useNuxtApp']>
     readonly useNuxtData: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/asyncData')['useNuxtData']>
     readonly usePreviewMode: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/preview')['usePreviewMode']>
+    readonly useReducedMotion: UnwrapRef<typeof import('motion-v')['useReducedMotion']>
     readonly useRequestEvent: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr')['useRequestEvent']>
     readonly useRequestFetch: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr')['useRequestFetch']>
     readonly useRequestHeader: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/ssr')['useRequestHeader']>
@@ -380,15 +406,21 @@ declare module 'vue' {
     readonly useScriptVimeoPlayer: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs')['useScriptVimeoPlayer']>
     readonly useScriptXPixel: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs')['useScriptXPixel']>
     readonly useScriptYouTubePlayer: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/script-stubs')['useScriptYouTubePlayer']>
+    readonly useScroll: UnwrapRef<typeof import('motion-v')['useScroll']>
     readonly useSeoMeta: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head')['useSeoMeta']>
     readonly useServerHead: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head')['useServerHead']>
     readonly useServerHeadSafe: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head')['useServerHeadSafe']>
     readonly useServerSeoMeta: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/head')['useServerSeoMeta']>
     readonly useShadowRoot: UnwrapRef<typeof import('vue')['useShadowRoot']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useSpring: UnwrapRef<typeof import('motion-v')['useSpring']>
     readonly useState: UnwrapRef<typeof import('../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/composables/state')['useState']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
+    readonly useTime: UnwrapRef<typeof import('motion-v')['useTime']>
+    readonly useTransform: UnwrapRef<typeof import('motion-v')['useTransform']>
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
+    readonly useVelocity: UnwrapRef<typeof import('motion-v')['useVelocity']>
+    readonly vMotion: UnwrapRef<typeof import('motion-v')['vMotion']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

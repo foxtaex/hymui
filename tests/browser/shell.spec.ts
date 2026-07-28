@@ -11,10 +11,116 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   const projekteHeading = page.getByRole("heading", { level: 1, name: "Projekte" });
   await expect(welcomeHeading.or(projectsHeading).or(projekteHeading)).toBeVisible();
   if (await welcomeHeading.isVisible()) {
+    await expect(page.locator(".auth-card .hm-brand-mark")).toBeVisible();
+    await expect(page.locator(".auth-card img")).toHaveCount(0);
+    await expect(page.locator(".hm-app-shell__bar-wrap")).toHaveCount(0);
+    await expect(page.locator(".hm-app-shell__mobile-nav")).toHaveCount(0);
+    const passwordInput = page.locator("#auth-password");
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: /Show password|Passwort anzeigen/ }).click();
+    await expect(passwordInput).toHaveAttribute("type", "text");
+    await page
+      .getByRole("button", { name: /Sign in|Create account|Anmelden|Konto erstellen/ })
+      .click();
+    await expect(page.locator("#auth-username-error")).toBeVisible();
+    await expect(page.locator("#auth-password-error")).toBeVisible();
     await page.getByTestId("local-profile-action").click();
   }
 
   await expect(projectsHeading.or(projekteHeading)).toBeVisible();
+  await expect(page.locator(".hm-app-shell__bar-wrap")).toBeVisible();
+
+  await page
+    .locator(".page-heading__actions")
+    .getByRole("button", { name: /New project|Neues Projekt/ })
+    .click();
+  await expect(page.locator(".new-project-window")).toBeVisible();
+  await expect(page.locator('label[for="new-project-name"]')).toContainText(
+    /Project name|Projektname/,
+  );
+  await page.getByRole("button", { name: /Create project|Projekt erstellen/ }).click();
+  await expect(page.locator("#new-project-name-error")).toBeVisible();
+  await page.getByRole("button", { name: /Add link|Link hinzufügen/ }).click();
+  await expect(page.locator("#new-project-link-type-0-repository")).toBeVisible();
+  await page.getByRole("radio", { name: /External link|Externer Link/ }).click();
+  await expect(page.locator(".new-project-window")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /External link|Externer Link/ })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await page.locator("#new-project-link-label-0").fill("New project repository");
+  await page.locator("#new-project-link-url-0").fill("https://github.com/hymui/core");
+
+  await page
+    .locator(".page-heading__actions")
+    .getByRole("button", { name: /New project|Neues Projekt/ })
+    .click();
+  await expect(page.locator(".new-project-window")).toBeVisible();
+  await expect(page.locator("#new-project-name-error")).toHaveCount(0);
+  await expect(page.locator('[id^="new-project-link-type-"]')).toHaveCount(0);
+
+  const retryProjectName = `Creation retry ${Date.now()}`;
+  await page.locator("#new-project-name").fill(retryProjectName);
+  await page.locator("#new-project-description").fill("Created after an invalid first attempt");
+  await page.getByRole("button", { name: /Create project|Projekt erstellen/ }).click();
+  await expect(page.locator(".new-project-window")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 2, name: retryProjectName })).toBeVisible();
+
+  let editProjectAction = page
+    .getByRole("button", { name: /Edit project|Projekt bearbeiten/ })
+    .first();
+  if ((await editProjectAction.count()) === 0) {
+    await page
+      .locator(".page-heading__actions")
+      .getByRole("button", { name: /New project|Neues Projekt/ })
+      .click();
+    await page.locator("#new-project-name").fill("Browser project");
+    await page.locator("#new-project-description").fill("Created by the browser flow");
+    await page.getByRole("button", { name: /Create project|Projekt erstellen/ }).click();
+    editProjectAction = page
+      .getByRole("button", { name: /Edit project|Projekt bearbeiten/ })
+      .first();
+  }
+
+  const projectHasBrowserLink =
+    (await page.getByRole("link", { name: "Browser test link" }).count()) > 0;
+  await editProjectAction.click();
+  await expect(page.locator(".edit-project-window")).toBeVisible();
+  if (!projectHasBrowserLink) {
+    await page.getByRole("button", { name: /Add link|Link hinzufügen/ }).click();
+    await page.locator('[id^="edit-project-link-label-"]').last().fill("Browser test link");
+    await page.locator('[id^="edit-project-link-url-"]').last().fill("https://example.com/hymui");
+  }
+  await page.getByRole("button", { name: /Save changes|Änderungen speichern/ }).click();
+  await expect(page.locator(".edit-project-window")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Browser test link" })).toBeVisible();
+
+  await page
+    .locator(".project-card:not(.project-card--archived)")
+    .first()
+    .click({
+      position: { x: 24, y: 24 },
+    });
+  await expect(page.locator(".project-overview-page")).toBeVisible();
+  await expect(
+    page.locator('.hm-app-shell__nav-item--active[aria-label="Projects"]'),
+  ).toBeVisible();
+  await expect(page.locator('.hm-app-shell__nav-item--active[aria-label="Board"]')).toHaveCount(0);
+
+  const overviewName = await page.locator(".project-overview__hero h1").innerText();
+  await page.getByRole("button", { name: /Edit project|Projekt bearbeiten/ }).click();
+  await expect(page.locator(".edit-project-window")).toBeVisible();
+  await expect(page.locator("#edit-project-name")).toHaveValue(overviewName);
+  await page.locator("#edit-project-description").fill("Edited from the project overview");
+  await page.getByRole("button", { name: /Save changes|Änderungen speichern/ }).click();
+  await expect(page.locator(".edit-project-window")).toHaveCount(0);
+  await expect(page.locator(".project-overview__hero")).toContainText(
+    "Edited from the project overview",
+  );
+  await expect(page.locator(".project-overview__hero h1")).toHaveText(overviewName);
+
+  await page.getByRole("button", { name: /All projects|Alle Projekte/ }).click();
+  await expect(page.locator(".projects-page")).toBeVisible();
 
   const profileAction = page.getByTestId("user-settings-action");
   await profileAction.click();
@@ -97,7 +203,11 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   await expect(page.locator(".hm-app-shell")).toHaveClass(/hm-app-shell--nav-top/);
 
   await page.getByRole("button", { name: "Archive 2026" }).click();
-  await expect(page.getByText("There are no archived projects yet.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Archive 2026" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect(page.locator(".project-archive")).toBeVisible();
 
   await page.locator("#project-search").fill("project-that-does-not-exist");
   await expect(page.getByText("No matching projects")).toBeVisible();
@@ -115,14 +225,16 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   await page.getByRole("option", { name: "Deutsch" }).click();
   await expect(projekteHeading).toBeVisible();
 
-  const desktopIndicator = page.locator(".hm-app-shell__nav-indicator");
-  const indicatorBefore = await desktopIndicator.evaluate(
-    (element) => getComputedStyle(element).transform,
-  );
+  await page.setViewportSize({ height: 800, width: 820 });
+  const activeDesktopItem = page.locator(".hm-app-shell__nav-item--active");
+  await expect(activeDesktopItem.locator(".hm-app-shell__item-indicator")).toBeVisible();
+  const indicatorBefore = await activeDesktopItem.boundingBox();
   await page.getByRole("button", { exact: true, name: "Board" }).click();
+  await expect(activeDesktopItem).toContainText("Board");
+  await expect(activeDesktopItem.locator(".hm-app-shell__item-indicator")).toBeVisible();
   await expect
-    .poll(() => desktopIndicator.evaluate((element) => getComputedStyle(element).transform))
-    .not.toBe(indicatorBefore);
+    .poll(async () => (await activeDesktopItem.boundingBox())?.x ?? 0)
+    .toBeGreaterThan(indicatorBefore?.x ?? 0);
   await expect(page.getByText("Dieses Produktmodul folgt", { exact: false })).toBeVisible();
 });
 
@@ -138,9 +250,28 @@ test("allows the mobile navigation to slide horizontally", async ({ page }) => {
     .or(page.getByRole("heading", { level: 1, name: "Projekte" }));
   await expect(welcomeHeading.or(projectsHeading)).toBeVisible();
   if (await welcomeHeading.isVisible()) {
+    await expect(page.locator(".hm-app-shell__bar-wrap")).toHaveCount(0);
+    await expect(page.locator(".hm-app-shell__mobile-nav")).toHaveCount(0);
     await page.getByTestId("local-profile-action").click();
   }
   await expect(projectsHeading).toBeVisible();
+
+  await page
+    .locator(".page-heading__actions")
+    .getByRole("button", { name: /New project|Neues Projekt/ })
+    .click();
+  await page.getByRole("button", { name: /Add link|Link hinzufügen/ }).click();
+  await page.getByRole("radio", { name: /External link|Externer Link/ }).click();
+  await expect(page.locator(".new-project-window")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /External link|Externer Link/ })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(page.locator("#new-project-link-label-0")).toBeVisible();
+  await page
+    .getByRole("button", { name: /Cancel|Abbrechen/ })
+    .last()
+    .click();
 
   const mobileNavigation = page.locator(".hm-app-shell__mobile-nav");
   await expect(mobileNavigation).toBeVisible();
@@ -154,8 +285,12 @@ test("allows the mobile navigation to slide horizontally", async ({ page }) => {
 
   await expect(mobileNavigation).toHaveCSS("overflow-x", "auto");
   await expect(mobileNavigation).toHaveCSS("scroll-snap-type", "inline mandatory");
-  await expect(mobileNavigation).toHaveCSS("--hm-mobile-active-index", "0");
-  await expect(page.locator(".hm-app-shell__mobile-item span").first()).toBeHidden();
+  await expect(
+    page.locator('.hm-app-shell__mobile-item--active[aria-label="Projects"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator(".hm-app-shell__mobile-item .hm-app-shell__item-label").first(),
+  ).toBeHidden();
 
   const dimensions = await mobileNavigation.evaluate((element) => ({
     clientWidth: element.clientWidth,
@@ -169,10 +304,13 @@ test("allows the mobile navigation to slide horizontally", async ({ page }) => {
     .toBeGreaterThan(0);
 
   await page.locator('.hm-app-shell__mobile-item[aria-label="Board"]').click();
-  await expect(mobileNavigation).toHaveCSS("--hm-mobile-active-index", "1");
+  const activeMobileItem = page.locator('.hm-app-shell__mobile-item--active[aria-label="Board"]');
+  await expect(activeMobileItem).toBeVisible();
   await expect
     .poll(() =>
-      mobileNavigation.evaluate((element) => getComputedStyle(element, "::before").backgroundImage),
+      activeMobileItem
+        .locator(".hm-app-shell__item-indicator")
+        .evaluate((element) => getComputedStyle(element).backgroundImage),
     )
     .toContain("linear-gradient");
 });

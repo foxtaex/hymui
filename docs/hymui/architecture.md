@@ -50,6 +50,7 @@ provider, or repository host directly.
 - PostgreSQL, MySQL, and MariaDB for supported server deployments
 - Microsoft SQL Server as an experimental adapter
 - standalone SCSS files; no inline CSS or CSS-in-JS
+- Motion for Vue (`motion-v`) for layout, presence, gesture, and spring animation
 - contract, unit, integration, migration, and browser tests
 
 ## Hosted reference deployment

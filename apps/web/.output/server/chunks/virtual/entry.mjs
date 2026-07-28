@@ -1,4 +1,4 @@
-import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { getCurrentScope, ref, watchEffect, getCurrentInstance, onBeforeUnmount, onDeactivated, onActivated, createApp, provide, onErrorCaptured, onServerPrefetch, unref, createVNode, resolveDynamicComponent, shallowReactive, reactive, effectScope, hasInjectionContext, inject, defineAsyncComponent, mergeProps, toRef, shallowRef, isReadonly, defineComponent, h, useSSRContext, isRef, isShallow, isReactive, toRaw, computed, watch, isVNode, createCommentVNode, Suspense, Fragment } from 'vue';
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { getCurrentScope, ref, watchEffect, getCurrentInstance, onBeforeUnmount, onDeactivated, onActivated, createApp, provide, onErrorCaptured, onServerPrefetch, unref, createVNode, resolveDynamicComponent, shallowReactive, reactive, effectScope, hasInjectionContext, inject, defineAsyncComponent, mergeProps, defineComponent, withCtx, toRef, computed, renderSlot, h, watch, isVNode, createCommentVNode, shallowRef, isReadonly, Suspense, Fragment, useSSRContext, isRef, isShallow, isReactive, toRaw } from 'vue';
 import { c as createError, $ as $fetch, l as hasProtocol, f as joinURL, w as withQuery, s as sanitizeStatusCode, p as parseURL, e as encodePath, m as decodePath, n as defu, o as isScriptProtocol } from '../nitro/nitro.mjs';
 import { i as injectHead$1, V as VueResolver, b as baseURL, h as headSymbol } from '../routes/renderer.mjs';
 import { ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode } from 'vue/server-renderer';
@@ -220,7 +220,7 @@ function createHooks() {
 function _getAsyncLocalStorage() {
 	return globalThis.AsyncLocalStorage || globalThis.process?.getBuiltinModule?.("node:async_hooks")?.AsyncLocalStorage;
 }
-function createContext(opts = {}) {
+function createContext$1(opts = {}) {
 	let currentInstance;
 	let isSingleton = false;
 	const checkConflict = (instance) => {
@@ -288,7 +288,7 @@ function createContext(opts = {}) {
 function createNamespace(defaultOpts = {}) {
 	const contexts = {};
 	return { get(key, opts = {}) {
-		if (!contexts[key]) contexts[key] = createContext({
+		if (!contexts[key]) contexts[key] = createContext$1({
 			...defaultOpts,
 			...opts
 		});
@@ -2633,7 +2633,7 @@ var namedMiddleware = {};
 var virtual_nuxt_node_modules_2F_cache_2Fnuxt_2F_nuxt_2Froutes_default = [{
 	name: "index",
 	path: "/",
-	component: () => import('../build/pages-BaETQ5zX.mjs')
+	component: () => import('../build/pages-BF8J8EaR.mjs')
 }];
 //#endregion
 //#region ../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/pages/runtime/plugins/router.js
@@ -2968,25 +2968,105 @@ function normalizeSlot(slot, data) {
 	return slotContent.length === 1 ? h(slotContent[0]) : h(Fragment, void 0, slotContent);
 }
 //#endregion
-//#region \0plugin-vue:export-helper
-var _plugin_vue_export_helper_default = (sfc, props) => {
-	const target = sfc.__vccOpts || sfc;
-	for (const [key, val] of props) target[key] = val;
-	return target;
+//#region ../../node_modules/.pnpm/motion-v@2.3.0_@vueuse+core@14.3.0_vue@3.5.40_typescript@5.9.3___vue@3.5.40_typescript@5.9.3_/node_modules/motion-v/dist/es/utils/createContext.mjs
+function createContext(providerComponentName, contextName) {
+	const symbolDescription = typeof providerComponentName === "string" && !contextName ? `${providerComponentName}Context` : contextName;
+	const injectionKey = Symbol(symbolDescription);
+	const injectContext = (fallback) => {
+		const context = inject(injectionKey, fallback);
+		if (context === void 0) throw new Error(`Injection \`${injectionKey.toString()}\` not found. Component must be used within ${Array.isArray(providerComponentName) ? `one of the following components: ${providerComponentName.join(", ")}` : `\`${providerComponentName}\``}`);
+		return context;
+	};
+	const provideContext = (contextValue) => {
+		provide(injectionKey, contextValue);
+		return contextValue;
+	};
+	return [
+		injectContext,
+		provideContext,
+		injectionKey
+	];
+}
+typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope;
+var isDef = (val) => typeof val !== "undefined";
+//#endregion
+//#region ../../node_modules/.pnpm/motion-v@2.3.0_@vueuse+core@14.3.0_vue@3.5.40_typescript@5.9.3___vue@3.5.40_typescript@5.9.3_/node_modules/motion-v/dist/es/components/motion-config/context.mjs
+var defaultConfig = {
+	reducedMotion: "never",
+	transition: void 0,
+	nonce: void 0
 };
+var [injectMotionConfig, provideMotionConfig] = createContext("MotionConfig");
+function useMotionConfig() {
+	return injectMotionConfig(computed(() => defaultConfig));
+}
+//#endregion
+//#region ../../node_modules/.pnpm/motion-v@2.3.0_@vueuse+core@14.3.0_vue@3.5.40_typescript@5.9.3___vue@3.5.40_typescript@5.9.3_/node_modules/motion-v/dist/es/components/motion-config/MotionConfig.mjs
+var MotionConfig_default = /* @__PURE__ */ defineComponent({
+	name: "MotionConfig",
+	inheritAttrs: false,
+	__name: "MotionConfig",
+	props: {
+		transition: {},
+		reduceMotion: {},
+		reducedMotion: { default: ({ reduceMotion }) => {
+			if (isDef(reduceMotion)) return reduceMotion;
+			return defaultConfig.reducedMotion;
+		} },
+		skipAnimations: { type: Boolean },
+		nonce: {},
+		inViewOptions: {}
+	},
+	setup(__props) {
+		const props = __props;
+		const parentConfig = useMotionConfig();
+		provideMotionConfig(computed(() => ({
+			transition: props.transition ?? parentConfig.value.transition,
+			reducedMotion: props.reducedMotion ?? parentConfig.value.reducedMotion,
+			skipAnimations: props.skipAnimations ?? parentConfig.value.skipAnimations,
+			nonce: props.nonce ?? parentConfig.value.nonce,
+			inViewOptions: props.inViewOptions ?? parentConfig.value.inViewOptions
+		})));
+		return (_ctx, _cache) => {
+			return renderSlot(_ctx.$slots, "default");
+		};
+	}
+});
+//#endregion
+//#region app/app.vue?vue&type=script&setup=true&lang.ts
+var app_vue_vue_type_script_setup_true_lang_default = /*@__PURE__*/ defineComponent({
+	__name: "app",
+	__ssrInlineRender: true,
+	setup(__props) {
+		return (_ctx, _push, _parent, _attrs) => {
+			const _component_NuxtPage = page_default;
+			_push(ssrRenderComponent(unref(MotionConfig_default), mergeProps({
+				"reduced-motion": "user",
+				transition: {
+					type: "spring",
+					stiffness: 380,
+					damping: 32,
+					mass: .75
+				}
+			}, _attrs), {
+				default: withCtx((_, _push, _parent, _scopeId) => {
+					if (_push) _push(ssrRenderComponent(_component_NuxtPage, null, null, _parent, _scopeId));
+					else return [createVNode(_component_NuxtPage)];
+				}),
+				_: 1
+			}, _parent));
+		};
+	}
+});
 //#endregion
 //#region app/app.vue
-var _sfc_main$2 = {};
-function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
-	_push(ssrRenderComponent(page_default, _attrs, null, _parent));
-}
-var _sfc_setup$2 = _sfc_main$2.setup;
-_sfc_main$2.setup = (props, ctx) => {
+var _sfc_setup$2 = app_vue_vue_type_script_setup_true_lang_default.setup;
+app_vue_vue_type_script_setup_true_lang_default.setup = (props, ctx) => {
 	const ssrContext = useSSRContext();
 	(ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("app.vue");
 	return _sfc_setup$2 ? _sfc_setup$2(props, ctx) : void 0;
 };
-var app_default = /*#__PURE__*/ _plugin_vue_export_helper_default(_sfc_main$2, [["ssrRender", _sfc_ssrRender]]);
+var app_default = app_vue_vue_type_script_setup_true_lang_default;
 //#endregion
 //#region ../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/components/nuxt-error-page.vue
 var _sfc_main$1 = {
@@ -3000,8 +3080,8 @@ var _sfc_main$1 = {
 		const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
 		const description = _error.message || _error.toString();
 		const stack = void 0;
-		const _Error404 = defineAsyncComponent(() => import('../build/error-404-D_D3CX1Q.mjs'));
-		const _Error = defineAsyncComponent(() => import('../build/error-500-BaQL34g4.mjs'));
+		const _Error404 = defineAsyncComponent(() => import('../build/error-404-B2vkvLiC.mjs'));
+		const _Error = defineAsyncComponent(() => import('../build/error-500-eaFiytou.mjs'));
 		const ErrorTemplate = is404 ? _Error404 : _Error;
 		return (_ctx, _push, _parent, _attrs) => {
 			_push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({
@@ -3101,5 +3181,5 @@ const entry = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: entry_default
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { $fetch$1 as $, _plugin_vue_export_helper_default as _, useRuntimeConfig as a, useHead$1 as b, useRouter as c, nuxtLinkDefaults as d, encodeRoutePath as e, entry as f, navigateTo as n, resolveRouteObject as r, stateDiagnostics as s, useNuxtApp as u };
+export { $fetch$1 as $, useRuntimeConfig as a, useMotionConfig as b, createContext as c, useHead$1 as d, useRouter as e, encodeRoutePath as f, nuxtLinkDefaults as g, entry as h, isDef as i, navigateTo as n, resolveRouteObject as r, stateDiagnostics as s, useNuxtApp as u };
 //# sourceMappingURL=entry.mjs.map

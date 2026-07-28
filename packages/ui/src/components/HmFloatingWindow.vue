@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { GripHorizontal } from "@lucide/vue";
+import { motion } from "motion-v";
 import {
   computed,
   nextTick,
@@ -14,6 +15,7 @@ import {
 import HmLiquidSurface from "./HmLiquidSurface.vue";
 
 defineOptions({ inheritAttrs: false });
+const MotionLiquidSurface = motion.create(HmLiquidSurface);
 
 const props = withDefaults(
   defineProps<{
@@ -137,12 +139,16 @@ onBeforeUnmount(() => {
       :class="[`hm-floating-window--${size}`, { 'hm-floating-window--dragging': dragging }]"
       :style="positionStyle"
     >
-      <HmLiquidSurface
+      <MotionLiquidSurface
         v-bind="$attrs"
         :level="level"
         class="hm-floating-window__surface"
         role="dialog"
         :aria-label="label"
+        :initial="{ opacity: 0, scale: 0.96, y: 12 }"
+        :animate="{ opacity: 1, scale: dragging ? 1.012 : 1, y: 0 }"
+        :exit="{ opacity: 0, scale: 0.97, y: 8 }"
+        :transition="{ type: 'spring', stiffness: 420, damping: 34, mass: 0.76 }"
       >
         <div class="hm-floating-window__titlebar" @pointerdown="startDragging">
           <GripHorizontal
@@ -156,7 +162,7 @@ onBeforeUnmount(() => {
         <div class="hm-floating-window__content">
           <slot />
         </div>
-      </HmLiquidSurface>
+      </MotionLiquidSurface>
     </div>
   </Teleport>
 </template>

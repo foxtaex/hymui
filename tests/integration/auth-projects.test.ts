@@ -33,6 +33,36 @@ afterAll(async () => {
 
 describe("account sessions and persistent project authorization", () => {
   let cookie: string;
+  let project: Project;
+
+  it("reports the available authentication paths before setup", async () => {
+    const response = await api.inject({
+      method: "GET",
+      url: "/api/v1/auth/capabilities",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      edition: "local",
+      localProfileAvailable: true,
+      registrationOpen: true,
+    });
+  });
+
+  it("allows browser clients to send project updates", async () => {
+    const response = await api.inject({
+      headers: {
+        "access-control-request-headers": "content-type",
+        "access-control-request-method": "PATCH",
+        origin: "http://127.0.0.1:3000",
+      },
+      method: "OPTIONS",
+      url: "/api/v1/projects/7548a934-de2e-4df2-b50f-6ec988c0685e",
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers["access-control-allow-methods"]).toContain("PATCH");
+  });
 
   it("rejects unauthenticated project reads", async () => {
     const response = await api.inject({ method: "GET", url: "/api/v1/projects" });
@@ -61,20 +91,45 @@ describe("account sessions and persistent project authorization", () => {
     cookie = Array.isArray(setCookie) ? (setCookie[0] ?? "") : (setCookie ?? "");
   });
 
+  it("closes first-owner setup and hides the conflicting local profile", async () => {
+    const response = await api.inject({
+      method: "GET",
+      url: "/api/v1/auth/capabilities",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      edition: "local",
+      localProfileAvailable: false,
+      registrationOpen: false,
+    });
+  });
+
   it("creates and lists only the signed-in actor's projects", async () => {
     const createResponse = await api.inject({
       headers: { cookie },
       method: "POST",
       payload: {
         description: "The first durable product record",
+        links: [
+          {
+            kind: "repository",
+            label: "Core repository",
+            url: "https://github.com/hymui/core",
+          },
+        ],
         name: "Plan 02",
       },
       url: "/api/v1/projects",
     });
-    const project = createResponse.json<Project>();
+    project = createResponse.json<Project>();
 
     expect(createResponse.statusCode).toBe(201);
-    expect(project).toMatchObject({ name: "Plan 02", revision: 1 });
+    expect(project).toMatchObject({
+      links: [{ kind: "repository", label: "Core repository" }],
+      name: "Plan 02",
+      revision: 1,
+    });
 
     const listResponse = await api.inject({
       headers: { cookie },
@@ -85,6 +140,65 @@ describe("account sessions and persistent project authorization", () => {
 
     expect(listResponse.statusCode).toBe(200);
     expect(list.projects).toEqual([project]);
+  });
+
+  it("edits project details and external links with a revision check", async () => {
+    const response = await api.inject({
+      headers: { cookie },
+      method: "PATCH",
+      payload: {
+        description: "Updated project record",
+        links: [
+          {
+            kind: "external",
+            label: "Product brief",
+            url: "https://example.com/hymui-brief",
+          },
+        ],
+        name: "Plan 02 Updated",
+        revision: project.revision,
+      },
+      url: `/api/v1/projects/${project.id}`,
+    });
+    project = response.json<Project>();
+
+    expect(response.statusCode).toBe(200);
+    expect(project).toMatchObject({
+      description: "Updated project record",
+      links: [{ kind: "external", label: "Product brief" }],
+      name: "Plan 02 Updated",
+      revision: 2,
+    });
+  });
+
+  it("archives and restores a project with revision checks", async () => {
+    const archiveResponse = await api.inject({
+      headers: { cookie },
+      method: "PATCH",
+      payload: {
+        archived: true,
+        revision: project.revision,
+      },
+      url: `/api/v1/projects/${project.id}`,
+    });
+    const archived = archiveResponse.json<Project>();
+
+    expect(archiveResponse.statusCode).toBe(200);
+    expect(archived).toMatchObject({ archived: true, revision: 3 });
+
+    const restoreResponse = await api.inject({
+      headers: { cookie },
+      method: "PATCH",
+      payload: {
+        archived: false,
+        revision: archived.revision,
+      },
+      url: `/api/v1/projects/${project.id}`,
+    });
+    project = restoreResponse.json<Project>();
+
+    expect(restoreResponse.statusCode).toBe(200);
+    expect(project).toMatchObject({ archived: false, revision: 4 });
   });
 
   it("logs out and invalidates the persisted session", async () => {
@@ -129,5 +243,19 @@ describe("account sessions and persistent project authorization", () => {
 
     expect(listResponse.statusCode).toBe(200);
     expect(listResponse.json<ProjectList>().projects).toHaveLength(1);
+  });
+
+  it("returns a stable error code for invalid credentials", async () => {
+    const response = await api.inject({
+      method: "POST",
+      payload: {
+        password: "not-the-right-password",
+        username: "ada",
+      },
+      url: "/api/v1/auth/login",
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toMatchObject({ code: "INVALID_CREDENTIALS" });
   });
 });

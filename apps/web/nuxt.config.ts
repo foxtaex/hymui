@@ -32,7 +32,7 @@ export default defineNuxtConfig({
       title: "Hymui",
     },
   },
-  modules: [],
+  modules: ["motion-v/nuxt"],
   nitro: {
     preset: "node-server",
   },

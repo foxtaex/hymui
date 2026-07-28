@@ -211,6 +211,14 @@ var AuthSessionSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var AuthCapabilitiesSchema = Type.Object(
+  {
+    edition: EditionSchema,
+    localProfileAvailable: Type.Boolean(),
+    registrationOpen: Type.Boolean()
+  },
+  { additionalProperties: false }
+);
 var RegisterRequestSchema = Type.Object(
   {
     displayName: Type.String({ maxLength: 80, minLength: 1 }),
@@ -226,12 +234,21 @@ var LoginRequestSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var ProjectLinkSchema = Type.Object(
+  {
+    kind: Type.Union([Type.Literal("repository"), Type.Literal("external")]),
+    label: Type.String({ maxLength: 80, minLength: 1 }),
+    url: Type.String({ maxLength: 2048, pattern: "^https?://\\S+$" })
+  },
+  { additionalProperties: false }
+);
 var ProjectSchema = Type.Object(
   {
     archived: Type.Boolean(),
     createdAt: DateTimeSchema,
     description: Type.String({ maxLength: 2e3 }),
     id: UuidSchema,
+    links: Type.Array(ProjectLinkSchema, { maxItems: 20 }),
     name: Type.String({ maxLength: 120, minLength: 1 }),
     ownerId: UuidSchema,
     revision: Type.Integer({ minimum: 1 }),
@@ -248,6 +265,7 @@ var ProjectListSchema = Type.Object(
 var CreateProjectRequestSchema = Type.Object(
   {
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.String({ maxLength: 120, minLength: 1 })
   },
   { additionalProperties: false }
@@ -256,6 +274,7 @@ var UpdateProjectRequestSchema = Type.Object(
   {
     archived: Type.Optional(Type.Boolean()),
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.Optional(Type.String({ maxLength: 120, minLength: 1 })),
     revision: Type.Integer({ minimum: 1 })
   },

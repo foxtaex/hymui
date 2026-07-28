@@ -230,6 +230,14 @@ var AuthSessionSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var AuthCapabilitiesSchema = Type.Object(
+  {
+    edition: EditionSchema,
+    localProfileAvailable: Type.Boolean(),
+    registrationOpen: Type.Boolean()
+  },
+  { additionalProperties: false }
+);
 var RegisterRequestSchema = Type.Object(
   {
     displayName: Type.String({ maxLength: 80, minLength: 1 }),
@@ -245,12 +253,21 @@ var LoginRequestSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var ProjectLinkSchema = Type.Object(
+  {
+    kind: Type.Union([Type.Literal("repository"), Type.Literal("external")]),
+    label: Type.String({ maxLength: 80, minLength: 1 }),
+    url: Type.String({ maxLength: 2048, pattern: "^https?://\\S+$" })
+  },
+  { additionalProperties: false }
+);
 var ProjectSchema = Type.Object(
   {
     archived: Type.Boolean(),
     createdAt: DateTimeSchema,
     description: Type.String({ maxLength: 2e3 }),
     id: UuidSchema,
+    links: Type.Array(ProjectLinkSchema, { maxItems: 20 }),
     name: Type.String({ maxLength: 120, minLength: 1 }),
     ownerId: UuidSchema,
     revision: Type.Integer({ minimum: 1 }),
@@ -267,6 +284,7 @@ var ProjectListSchema = Type.Object(
 var CreateProjectRequestSchema = Type.Object(
   {
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.String({ maxLength: 120, minLength: 1 })
   },
   { additionalProperties: false }
@@ -275,6 +293,7 @@ var UpdateProjectRequestSchema = Type.Object(
   {
     archived: Type.Optional(Type.Boolean()),
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.Optional(Type.String({ maxLength: 120, minLength: 1 })),
     revision: Type.Integer({ minimum: 1 })
   },
@@ -12468,6 +12487,7 @@ var projects = pgTable("projects", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
   description: text("description").notNull().default(""),
   id: text("id").primaryKey(),
+  linksJson: text("links_json").notNull().default("[]"),
   name: text("name").notNull(),
   ownerId: text("owner_id").notNull().references(() => actors.id, { onDelete: "cascade" }),
   revision: integer("revision").notNull().default(1),
@@ -12565,6 +12585,9 @@ var durableJobStatements = [
     UNIQUE(job_id, attempt)
   )`
 ];
+var projectLinksStatements = [
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`
+];
 function migrationChecksum(statements) {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -12580,6 +12603,12 @@ var hymuiMigrations = [
     id: "0002",
     name: "durable_diagnostic_job_leases",
     statements: durableJobStatements
+  },
+  {
+    checksum: migrationChecksum(projectLinksStatements),
+    id: "0003",
+    name: "project_external_links",
+    statements: projectLinksStatements
   }
 ];
 function actorRecord(row) {
@@ -12601,11 +12630,19 @@ function sessionRecord(row) {
   };
 }
 function projectRecord(row) {
+  let links = [];
+  try {
+    const parsed = JSON.parse(row.linksJson);
+    if (Array.isArray(parsed)) links = parsed;
+  } catch {
+    links = [];
+  }
   return {
     archived: row.archived,
     createdAt: row.createdAt.toISOString(),
     description: row.description,
     id: row.id,
+    links,
     name: row.name,
     ownerId: row.ownerId,
     revision: row.revision,
@@ -12694,6 +12731,7 @@ async function createPgliteDatabase(options = {}) {
         createdAt: input.timestamp,
         description: input.description ?? "",
         id: input.id,
+        linksJson: JSON.stringify(input.links ?? []),
         name: input.name,
         ownerId: input.ownerId,
         revision: 1,
@@ -12722,6 +12760,7 @@ async function createPgliteDatabase(options = {}) {
       const [updated] = await database.update(projects).set({
         archived: input.archived ?? existing.archived,
         description: input.description ?? existing.description,
+        linksJson: input.links === void 0 ? existing.linksJson : JSON.stringify(input.links),
         name: input.name ?? existing.name,
         revision: existing.revision + 1,
         updatedAt: input.timestamp
@@ -13102,6 +13141,25 @@ function publicActor(account) {
 async function registerAuthRoutes(app2, database, config2) {
   const typedApp = app2.withTypeProvider();
   const secureCookie = config2.mode === "hosted";
+  typedApp.get(
+    "/api/v1/auth/capabilities",
+    {
+      schema: {
+        response: {
+          200: AuthCapabilitiesSchema
+        }
+      }
+    },
+    async () => {
+      const accountCount = await database.accounts.count();
+      const localAccount = config2.edition === "local" ? await database.accounts.findByUsername("local") : null;
+      return {
+        edition: config2.edition,
+        localProfileAvailable: config2.edition === "local" && (accountCount === 0 || localAccount !== null),
+        registrationOpen: config2.edition === "hosted" || accountCount === 0
+      };
+    }
+  );
   typedApp.post(
     "/api/v1/auth/register",
     {
@@ -13480,6 +13538,13 @@ var ProjectParamsSchema = Type3.Object(
 function errorResponse3(correlationId, code, message) {
   return { code, correlationId, message };
 }
+function normalizedLinks(links) {
+  return links?.map((link) => ({
+    kind: link.kind,
+    label: link.label.trim(),
+    url: link.url.trim()
+  }));
+}
 async function registerProjectRoutes(app2, database) {
   const typedApp = app2.withTypeProvider();
   typedApp.get(
@@ -13508,6 +13573,7 @@ async function registerProjectRoutes(app2, database) {
         body: CreateProjectRequestSchema,
         response: {
           201: ProjectSchema,
+          400: ErrorResponseSchema,
           401: ErrorResponseSchema
         }
       }
@@ -13518,9 +13584,17 @@ async function registerProjectRoutes(app2, database) {
       if (!actor) {
         return reply.status(401).send(errorResponse3(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
+      if (!request.body.name.trim()) {
+        return reply.status(400).send(errorResponse3(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required."));
+      }
+      const links = normalizedLinks(request.body.links);
+      if (links?.some((link) => !link.label)) {
+        return reply.status(400).send(errorResponse3(correlationId, "PROJECT_LINK_INVALID", "Link labels are required."));
+      }
       const project = await database.projects.create({
         ...request.body.description === void 0 ? {} : { description: request.body.description },
         id: randomUUID5(),
+        ...links === void 0 ? {} : { links },
         name: request.body.name.trim(),
         ownerId: actor.id,
         timestamp: /* @__PURE__ */ new Date()
@@ -13536,6 +13610,7 @@ async function registerProjectRoutes(app2, database) {
         params: ProjectParamsSchema,
         response: {
           200: ProjectSchema,
+          400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           404: ErrorResponseSchema,
           409: ErrorResponseSchema
@@ -13549,9 +13624,22 @@ async function registerProjectRoutes(app2, database) {
         return reply.status(401).send(errorResponse3(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
       try {
+        if (request.body.name !== void 0 && !request.body.name.trim()) {
+          return reply.status(400).send(
+            errorResponse3(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required.")
+          );
+        }
+        const links = normalizedLinks(request.body.links);
+        if (links?.some((link) => !link.label)) {
+          return reply.status(400).send(
+            errorResponse3(correlationId, "PROJECT_LINK_INVALID", "Link labels are required.")
+          );
+        }
         const project = await database.projects.update({
           ...request.body,
           id: request.params.id,
+          ...links === void 0 ? {} : { links },
+          ...request.body.name === void 0 ? {} : { name: request.body.name.trim() },
           ownerId: actor.id,
           timestamp: /* @__PURE__ */ new Date()
         });
@@ -13605,6 +13693,7 @@ async function buildApiApp(options = {}) {
     allowedHeaders: ["content-type", CorrelationIdHeader],
     credentials: true,
     exposedHeaders: [CorrelationIdHeader],
+    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
     origin: true
   });
   if (ownsDatabase) {

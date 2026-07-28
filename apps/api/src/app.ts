@@ -66,6 +66,7 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
     allowedHeaders: ["content-type", CorrelationIdHeader],
     credentials: true,
     exposedHeaders: [CorrelationIdHeader],
+    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
     origin: true,
   });
 

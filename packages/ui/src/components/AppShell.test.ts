@@ -1,14 +1,16 @@
 // @vitest-environment happy-dom
 
 import { mount } from "@vue/test-utils";
-import { defineComponent } from "vue";
+import { defineComponent, markRaw } from "vue";
 import { describe, expect, it } from "vitest";
 
 import AppShell from "./AppShell.vue";
 
-const TestIcon = defineComponent({
-  template: "<span />",
-});
+const TestIcon = markRaw(
+  defineComponent({
+    template: "<span />",
+  }),
+);
 
 describe("AppShell", () => {
   it("updates the navigation position", async () => {
@@ -21,7 +23,14 @@ describe("AppShell", () => {
     });
 
     expect(wrapper.classes()).toContain("hm-app-shell--nav-bottom");
-    expect(wrapper.find(".hm-app-shell__nav-indicator").exists()).toBe(true);
+    expect(
+      wrapper
+        .find(".hm-app-shell__nav-item--active")
+        .find(".hm-app-shell__item-indicator")
+        .exists(),
+    ).toBe(true);
+    expect(wrapper.find(".hm-brand-mark").element.tagName).toBe("svg");
+    expect(wrapper.find(".hm-brand img").exists()).toBe(false);
 
     await wrapper.setProps({ navPosition: "top" });
 
@@ -35,7 +44,7 @@ describe("AppShell", () => {
     expect(wrapper.classes()).toContain("hm-app-shell--nav-right");
   });
 
-  it("exposes the active mobile item index for the sliding indicator", async () => {
+  it("moves the liquid indicator to the active mobile item", async () => {
     const wrapper = mount(AppShell, {
       props: {
         active: "board",
@@ -46,14 +55,35 @@ describe("AppShell", () => {
       },
     });
 
-    expect(wrapper.find(".hm-app-shell__mobile-nav").attributes("style")).toContain(
-      "--hm-mobile-active-index: 1",
-    );
+    expect(
+      wrapper
+        .find(".hm-app-shell__mobile-item--active")
+        .find(".hm-app-shell__item-indicator")
+        .exists(),
+    ).toBe(true);
+    expect(wrapper.find(".hm-app-shell__mobile-item--active").text()).toContain("Board");
 
     await wrapper.setProps({ active: "projects" });
 
-    expect(wrapper.find(".hm-app-shell__mobile-nav").attributes("style")).toContain(
-      "--hm-mobile-active-index: 0",
-    );
+    expect(wrapper.find(".hm-app-shell__mobile-item--active").text()).toContain("Projects");
+  });
+
+  it("removes product navigation when the shell is used for authentication", async () => {
+    const wrapper = mount(AppShell, {
+      props: {
+        active: "projects",
+        nav: [{ icon: TestIcon, id: "projects", label: "Projects" }],
+        navigationVisible: false,
+      },
+    });
+
+    expect(wrapper.classes()).toContain("hm-app-shell--navigation-hidden");
+    expect(wrapper.find(".hm-app-shell__bar-wrap").exists()).toBe(false);
+    expect(wrapper.find(".hm-app-shell__mobile-nav").exists()).toBe(false);
+
+    await wrapper.setProps({ navigationVisible: true });
+
+    expect(wrapper.find(".hm-app-shell__bar-wrap").exists()).toBe(true);
+    expect(wrapper.find(".hm-app-shell__mobile-nav").exists()).toBe(true);
   });
 });

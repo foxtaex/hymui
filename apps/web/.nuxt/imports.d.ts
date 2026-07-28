@@ -34,3 +34,4 @@ export { setInterval } from '#app/compat/interval';
 export { definePageMeta, PageMeta } from '#app/composables/pages';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { useHymuiI18n } from '../app/composables/useHymuiI18n';
+export { useTransform, useTime, useMotionTemplate, useSpring, useScroll, useMotionValue, useVelocity, useAnimate, useInView, useAnimationFrame, useMotionValueEvent, useLayoutGroup, useDragControls, useReducedMotion, vMotion, createPresetDirective } from 'motion-v';

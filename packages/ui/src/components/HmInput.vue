@@ -5,14 +5,22 @@ withDefaults(
     label: string;
     modelValue: string;
     placeholder?: string;
-    type?: "text" | "search" | "email" | "password";
+    type?: "text" | "search" | "email" | "password" | "url";
     disabled?: boolean;
     error?: string;
+    autocomplete?: string | undefined;
+    maxlength?: number | undefined;
+    minlength?: number | undefined;
+    required?: boolean;
   }>(),
   {
+    autocomplete: undefined,
     disabled: false,
     error: "",
+    maxlength: undefined,
+    minlength: undefined,
     placeholder: "",
+    required: false,
     type: "text",
   },
 );
@@ -35,10 +43,17 @@ defineEmits<{
         :placeholder="placeholder"
         :type="type"
         :disabled="disabled"
+        :autocomplete="autocomplete"
+        :maxlength="maxlength"
+        :minlength="minlength"
+        :required="required"
         :aria-invalid="Boolean(error)"
         :aria-describedby="error ? `${id}-error` : undefined"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       />
+      <span v-if="$slots.trailing" class="hm-input__trailing">
+        <slot name="trailing" />
+      </span>
     </span>
     <span v-if="error" :id="`${id}-error`" class="hm-field__error">{{ error }}</span>
   </label>

@@ -33,6 +33,7 @@ var projects = pgTable("projects", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
   description: text("description").notNull().default(""),
   id: text("id").primaryKey(),
+  linksJson: text("links_json").notNull().default("[]"),
   name: text("name").notNull(),
   ownerId: text("owner_id").notNull().references(() => actors.id, { onDelete: "cascade" }),
   revision: integer("revision").notNull().default(1),
@@ -130,6 +131,9 @@ var durableJobStatements = [
     UNIQUE(job_id, attempt)
   )`
 ];
+var projectLinksStatements = [
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`
+];
 function migrationChecksum(statements) {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -145,6 +149,12 @@ var hymuiMigrations = [
     id: "0002",
     name: "durable_diagnostic_job_leases",
     statements: durableJobStatements
+  },
+  {
+    checksum: migrationChecksum(projectLinksStatements),
+    id: "0003",
+    name: "project_external_links",
+    statements: projectLinksStatements
   }
 ];
 function actorRecord(row) {
@@ -166,11 +176,19 @@ function sessionRecord(row) {
   };
 }
 function projectRecord(row) {
+  let links = [];
+  try {
+    const parsed = JSON.parse(row.linksJson);
+    if (Array.isArray(parsed)) links = parsed;
+  } catch {
+    links = [];
+  }
   return {
     archived: row.archived,
     createdAt: row.createdAt.toISOString(),
     description: row.description,
     id: row.id,
+    links,
     name: row.name,
     ownerId: row.ownerId,
     revision: row.revision,
@@ -259,6 +277,7 @@ async function createPgliteDatabase(options = {}) {
         createdAt: input.timestamp,
         description: input.description ?? "",
         id: input.id,
+        linksJson: JSON.stringify(input.links ?? []),
         name: input.name,
         ownerId: input.ownerId,
         revision: 1,
@@ -287,6 +306,7 @@ async function createPgliteDatabase(options = {}) {
       const [updated] = await database.update(projects).set({
         archived: input.archived ?? existing.archived,
         description: input.description ?? existing.description,
+        linksJson: input.links === void 0 ? existing.linksJson : JSON.stringify(input.links),
         name: input.name ?? existing.name,
         revision: existing.revision + 1,
         updatedAt: input.timestamp

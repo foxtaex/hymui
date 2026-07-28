@@ -3,6 +3,8 @@ import type { Component } from "vue";
 </script>
 
 <script setup lang="ts">
+import { motion } from "motion-v";
+
 defineProps<{
   active?: boolean;
   icon: Component;
@@ -25,11 +27,18 @@ defineEmits<{
       },
     ]"
     type="button"
-    :aria-label="mobile ? label : undefined"
+    :aria-label="label"
     :aria-current="active ? 'page' : undefined"
     @click="$emit('activate')"
   >
+    <motion.span
+      v-if="active"
+      class="hm-app-shell__item-indicator"
+      :layout-id="mobile ? 'hymui-mobile-nav-active' : 'hymui-desktop-nav-active'"
+      :transition="{ type: 'spring', stiffness: 440, damping: 34, mass: 0.7 }"
+      aria-hidden="true"
+    />
     <component :is="icon" :size="mobile ? 19 : 17" :stroke-width="1.5" aria-hidden="true" />
-    <span>{{ label }}</span>
+    <span class="hm-app-shell__item-label">{{ label }}</span>
   </button>
 </template>

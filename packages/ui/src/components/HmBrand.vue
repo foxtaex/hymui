@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import HmBrandMark from "./HmBrandMark.vue";
+
 defineEmits<{
   activate: [];
 }>();
@@ -6,7 +8,7 @@ defineEmits<{
 
 <template>
   <button class="hm-brand" type="button" aria-label="Open Projects" @click="$emit('activate')">
-    <img src="/logo/hymui/hymui-mark-vivid.svg" alt="" />
+    <HmBrandMark />
     <span>hymui<span class="hm-brand__dot">.</span></span>
   </button>
 </template>

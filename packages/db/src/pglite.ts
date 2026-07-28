@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
-import type { JobStatus, Project } from "@hymui/contracts";
+import type { JobStatus, Project, ProjectLink } from "@hymui/contracts";
 import { and, asc, eq, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 
@@ -88,6 +88,10 @@ const durableJobStatements = [
   )`,
 ] as const;
 
+const projectLinksStatements = [
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`,
+] as const;
+
 function migrationChecksum(statements: readonly string[]): string {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -104,6 +108,12 @@ export const hymuiMigrations: readonly Migration[] = [
     id: "0002",
     name: "durable_diagnostic_job_leases",
     statements: durableJobStatements,
+  },
+  {
+    checksum: migrationChecksum(projectLinksStatements),
+    id: "0003",
+    name: "project_external_links",
+    statements: projectLinksStatements,
   },
 ];
 
@@ -128,11 +138,19 @@ function sessionRecord(row: typeof sessions.$inferSelect): SessionRecord {
 }
 
 function projectRecord(row: typeof projects.$inferSelect): Project {
+  let links: ProjectLink[] = [];
+  try {
+    const parsed = JSON.parse(row.linksJson) as unknown;
+    if (Array.isArray(parsed)) links = parsed as ProjectLink[];
+  } catch {
+    links = [];
+  }
   return {
     archived: row.archived,
     createdAt: row.createdAt.toISOString(),
     description: row.description,
     id: row.id,
+    links,
     name: row.name,
     ownerId: row.ownerId,
     revision: row.revision,
@@ -248,6 +266,7 @@ export async function createPgliteDatabase(
           createdAt: input.timestamp,
           description: input.description ?? "",
           id: input.id,
+          linksJson: JSON.stringify(input.links ?? []),
           name: input.name,
           ownerId: input.ownerId,
           revision: 1,
@@ -291,6 +310,7 @@ export async function createPgliteDatabase(
         .set({
           archived: input.archived ?? existing.archived,
           description: input.description ?? existing.description,
+          linksJson: input.links === undefined ? existing.linksJson : JSON.stringify(input.links),
           name: input.name ?? existing.name,
           revision: existing.revision + 1,
           updatedAt: input.timestamp,

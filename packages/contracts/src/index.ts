@@ -166,6 +166,16 @@ export const AuthSessionSchema = Type.Object(
 );
 export type AuthSession = Static<typeof AuthSessionSchema>;
 
+export const AuthCapabilitiesSchema = Type.Object(
+  {
+    edition: EditionSchema,
+    localProfileAvailable: Type.Boolean(),
+    registrationOpen: Type.Boolean(),
+  },
+  { additionalProperties: false },
+);
+export type AuthCapabilities = Static<typeof AuthCapabilitiesSchema>;
+
 export const RegisterRequestSchema = Type.Object(
   {
     displayName: Type.String({ maxLength: 80, minLength: 1 }),
@@ -185,12 +195,23 @@ export const LoginRequestSchema = Type.Object(
 );
 export type LoginRequest = Static<typeof LoginRequestSchema>;
 
+export const ProjectLinkSchema = Type.Object(
+  {
+    kind: Type.Union([Type.Literal("repository"), Type.Literal("external")]),
+    label: Type.String({ maxLength: 80, minLength: 1 }),
+    url: Type.String({ maxLength: 2_048, pattern: "^https?://\\S+$" }),
+  },
+  { additionalProperties: false },
+);
+export type ProjectLink = Static<typeof ProjectLinkSchema>;
+
 export const ProjectSchema = Type.Object(
   {
     archived: Type.Boolean(),
     createdAt: DateTimeSchema,
     description: Type.String({ maxLength: 2_000 }),
     id: UuidSchema,
+    links: Type.Array(ProjectLinkSchema, { maxItems: 20 }),
     name: Type.String({ maxLength: 120, minLength: 1 }),
     ownerId: UuidSchema,
     revision: Type.Integer({ minimum: 1 }),
@@ -211,6 +232,7 @@ export type ProjectList = Static<typeof ProjectListSchema>;
 export const CreateProjectRequestSchema = Type.Object(
   {
     description: Type.Optional(Type.String({ maxLength: 2_000 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.String({ maxLength: 120, minLength: 1 }),
   },
   { additionalProperties: false },
@@ -221,6 +243,7 @@ export const UpdateProjectRequestSchema = Type.Object(
   {
     archived: Type.Optional(Type.Boolean()),
     description: Type.Optional(Type.String({ maxLength: 2_000 })),
+    links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.Optional(Type.String({ maxLength: 120, minLength: 1 })),
     revision: Type.Integer({ minimum: 1 }),
   },

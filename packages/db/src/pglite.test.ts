@@ -35,6 +35,13 @@ describe("PGlite database adapter", () => {
     const project = await database.projects.create({
       description: "Persistent from the first slice",
       id: randomUUID(),
+      links: [
+        {
+          kind: "repository",
+          label: "Core repository",
+          url: "https://github.com/hymui/core",
+        },
+      ],
       name: "Hymui Plan 02",
       ownerId: actor.id,
       timestamp,
@@ -55,6 +62,13 @@ describe("PGlite database adapter", () => {
       actorId: actor.id,
     });
     expect(await database.projects.listByActor(actor.id)).toEqual([project]);
+    expect(project.links).toEqual([
+      {
+        kind: "repository",
+        label: "Core repository",
+        url: "https://github.com/hymui/core",
+      },
+    ]);
     expect(await database.projects.listByActor(outsider.id)).toEqual([]);
     expect(await database.projects.findById(project.id, outsider.id)).toBeNull();
     expect(
@@ -72,7 +86,7 @@ describe("PGlite database adapter", () => {
     const firstStatus = await database.migrations.status();
     const secondStatus = await database.migrations.apply([]);
 
-    expect(firstStatus).toHaveLength(2);
+    expect(firstStatus).toHaveLength(3);
     expect(secondStatus).toEqual(firstStatus);
   });
 

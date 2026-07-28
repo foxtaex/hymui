@@ -18,6 +18,7 @@
     "@hymui/styles": "workspace:*",
     "@hymui/ui": "workspace:*",
     "@lucide/vue": "1.26.0",
+    "motion-v": "^2.3.0",
     "nuxt": "4.5.0",
     "vue": "3.5.40"
   },

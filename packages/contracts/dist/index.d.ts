@@ -99,6 +99,12 @@ declare const AuthSessionSchema: _sinclair_typebox.TObject<{
     expiresAt: _sinclair_typebox.TString;
 }>;
 type AuthSession = Static<typeof AuthSessionSchema>;
+declare const AuthCapabilitiesSchema: _sinclair_typebox.TObject<{
+    edition: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"local">, _sinclair_typebox.TLiteral<"self-hosted">, _sinclair_typebox.TLiteral<"hosted">]>;
+    localProfileAvailable: _sinclair_typebox.TBoolean;
+    registrationOpen: _sinclair_typebox.TBoolean;
+}>;
+type AuthCapabilities = Static<typeof AuthCapabilitiesSchema>;
 declare const RegisterRequestSchema: _sinclair_typebox.TObject<{
     displayName: _sinclair_typebox.TString;
     password: _sinclair_typebox.TString;
@@ -110,11 +116,22 @@ declare const LoginRequestSchema: _sinclair_typebox.TObject<{
     username: _sinclair_typebox.TString;
 }>;
 type LoginRequest = Static<typeof LoginRequestSchema>;
+declare const ProjectLinkSchema: _sinclair_typebox.TObject<{
+    kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"repository">, _sinclair_typebox.TLiteral<"external">]>;
+    label: _sinclair_typebox.TString;
+    url: _sinclair_typebox.TString;
+}>;
+type ProjectLink = Static<typeof ProjectLinkSchema>;
 declare const ProjectSchema: _sinclair_typebox.TObject<{
     archived: _sinclair_typebox.TBoolean;
     createdAt: _sinclair_typebox.TString;
     description: _sinclair_typebox.TString;
     id: _sinclair_typebox.TString;
+    links: _sinclair_typebox.TArray<_sinclair_typebox.TObject<{
+        kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"repository">, _sinclair_typebox.TLiteral<"external">]>;
+        label: _sinclair_typebox.TString;
+        url: _sinclair_typebox.TString;
+    }>>;
     name: _sinclair_typebox.TString;
     ownerId: _sinclair_typebox.TString;
     revision: _sinclair_typebox.TInteger;
@@ -127,6 +144,11 @@ declare const ProjectListSchema: _sinclair_typebox.TObject<{
         createdAt: _sinclair_typebox.TString;
         description: _sinclair_typebox.TString;
         id: _sinclair_typebox.TString;
+        links: _sinclair_typebox.TArray<_sinclair_typebox.TObject<{
+            kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"repository">, _sinclair_typebox.TLiteral<"external">]>;
+            label: _sinclair_typebox.TString;
+            url: _sinclair_typebox.TString;
+        }>>;
         name: _sinclair_typebox.TString;
         ownerId: _sinclair_typebox.TString;
         revision: _sinclair_typebox.TInteger;
@@ -136,15 +158,25 @@ declare const ProjectListSchema: _sinclair_typebox.TObject<{
 type ProjectList = Static<typeof ProjectListSchema>;
 declare const CreateProjectRequestSchema: _sinclair_typebox.TObject<{
     description: _sinclair_typebox.TOptional<_sinclair_typebox.TString>;
+    links: _sinclair_typebox.TOptional<_sinclair_typebox.TArray<_sinclair_typebox.TObject<{
+        kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"repository">, _sinclair_typebox.TLiteral<"external">]>;
+        label: _sinclair_typebox.TString;
+        url: _sinclair_typebox.TString;
+    }>>>;
     name: _sinclair_typebox.TString;
 }>;
 type CreateProjectRequest = Static<typeof CreateProjectRequestSchema>;
 declare const UpdateProjectRequestSchema: _sinclair_typebox.TObject<{
     archived: _sinclair_typebox.TOptional<_sinclair_typebox.TBoolean>;
     description: _sinclair_typebox.TOptional<_sinclair_typebox.TString>;
+    links: _sinclair_typebox.TOptional<_sinclair_typebox.TArray<_sinclair_typebox.TObject<{
+        kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"repository">, _sinclair_typebox.TLiteral<"external">]>;
+        label: _sinclair_typebox.TString;
+        url: _sinclair_typebox.TString;
+    }>>>;
     name: _sinclair_typebox.TOptional<_sinclair_typebox.TString>;
     revision: _sinclair_typebox.TInteger;
 }>;
 type UpdateProjectRequest = Static<typeof UpdateProjectRequestSchema>;
 
-export { type Actor, ActorSchema, ApiVersion, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };
+export { type Actor, ActorSchema, ApiVersion, type AuthCapabilities, AuthCapabilitiesSchema, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectLink, ProjectLinkSchema, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };

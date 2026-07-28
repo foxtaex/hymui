@@ -11,64 +11,26 @@ export type AppNavPosition = "bottom" | "left" | "right" | "top";
 </script>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { motion } from "motion-v";
 
 import HmBrand from "./HmBrand.vue";
 import HmLiquidSurface from "./HmLiquidSurface.vue";
 import HmNavItem from "./HmNavItem.vue";
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     active: string;
     nav: ReadonlyArray<AppNavItem>;
     navPosition?: AppNavPosition;
+    navigationVisible?: boolean;
   }>(),
   {
+    navigationVisible: true,
     navPosition: "bottom",
   },
 );
 
-const activeIndex = computed(() =>
-  Math.max(
-    0,
-    props.nav.findIndex((item) => item.id === props.active),
-  ),
-);
-const desktopNav = ref<HTMLElement | null>(null);
-const desktopIndicatorReady = ref(false);
-const desktopIndicatorHeight = ref(0);
-const desktopIndicatorWidth = ref(0);
-const desktopIndicatorX = ref(0);
-const desktopIndicatorY = ref(0);
-let desktopNavResizeObserver: ResizeObserver | undefined;
-
-function updateDesktopIndicator(): void {
-  const activeItem = desktopNav.value?.querySelector<HTMLElement>(
-    ".hm-app-shell__nav-item--active",
-  );
-  if (!activeItem || activeItem.offsetWidth === 0 || activeItem.offsetHeight === 0) return;
-
-  desktopIndicatorHeight.value = activeItem.offsetHeight;
-  desktopIndicatorWidth.value = activeItem.offsetWidth;
-  desktopIndicatorX.value = activeItem.offsetLeft;
-  desktopIndicatorY.value = activeItem.offsetTop;
-  desktopIndicatorReady.value = true;
-}
-
-watch([() => props.active, () => props.nav], () => void nextTick(updateDesktopIndicator));
-
-onMounted(() => {
-  void nextTick(updateDesktopIndicator);
-  if (typeof ResizeObserver !== "undefined") {
-    desktopNavResizeObserver = new ResizeObserver(updateDesktopIndicator);
-    if (desktopNav.value) desktopNavResizeObserver.observe(desktopNav.value);
-  }
-  void document.fonts?.ready.then(updateDesktopIndicator);
-});
-
-onBeforeUnmount(() => {
-  desktopNavResizeObserver?.disconnect();
-});
+const MotionLiquidSurface = motion.create(HmLiquidSurface);
 
 defineEmits<{
   navigate: [id: string];
@@ -76,27 +38,23 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="hm-app-shell" :class="`hm-app-shell--nav-${navPosition}`">
-    <header class="hm-app-shell__bar-wrap">
-      <HmLiquidSurface level="bar" class="hm-app-shell__bar">
+  <div
+    class="hm-app-shell"
+    :class="[
+      `hm-app-shell--nav-${navPosition}`,
+      { 'hm-app-shell--navigation-hidden': !navigationVisible },
+    ]"
+  >
+    <header v-if="navigationVisible" class="hm-app-shell__bar-wrap">
+      <MotionLiquidSurface
+        layout
+        :layout-dependency="navPosition"
+        level="bar"
+        class="hm-app-shell__bar"
+      >
         <HmBrand @activate="$emit('navigate', 'projects')" />
         <span class="hm-app-shell__separator" aria-hidden="true" />
-        <nav
-          ref="desktopNav"
-          class="hm-app-shell__nav"
-          :class="{ 'hm-app-shell__nav--indicator-ready': desktopIndicatorReady }"
-          aria-label="Primary navigation"
-        >
-          <span
-            class="hm-app-shell__nav-indicator"
-            :style="{
-              '--hm-nav-indicator-height': `${desktopIndicatorHeight}px`,
-              '--hm-nav-indicator-width': `${desktopIndicatorWidth}px`,
-              '--hm-nav-indicator-x': `${desktopIndicatorX}px`,
-              '--hm-nav-indicator-y': `${desktopIndicatorY}px`,
-            }"
-            aria-hidden="true"
-          />
+        <nav class="hm-app-shell__nav" aria-label="Primary navigation">
           <HmNavItem
             v-for="item in nav"
             :key="item.id"
@@ -113,18 +71,14 @@ defineEmits<{
         <div class="hm-app-shell__actions">
           <slot name="actions" />
         </div>
-      </HmLiquidSurface>
+      </MotionLiquidSurface>
     </header>
 
     <main class="hm-app-shell__content">
       <slot />
     </main>
 
-    <HmLiquidSurface
-      level="bar"
-      class="hm-app-shell__mobile-nav"
-      :style="{ '--hm-mobile-active-index': activeIndex }"
-    >
+    <HmLiquidSurface v-if="navigationVisible" level="bar" class="hm-app-shell__mobile-nav">
       <HmNavItem
         v-for="item in nav"
         :key="item.id"

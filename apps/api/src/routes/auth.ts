@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { RuntimeConfig } from "@hymui/config";
 import {
+  AuthCapabilitiesSchema,
   AuthSessionSchema,
   ErrorResponseSchema,
   LoginRequestSchema,
@@ -49,6 +50,29 @@ export async function registerAuthRoutes(
 ): Promise<void> {
   const typedApp = app.withTypeProvider<TypeBoxTypeProvider>();
   const secureCookie = config.mode === "hosted";
+
+  typedApp.get(
+    "/api/v1/auth/capabilities",
+    {
+      schema: {
+        response: {
+          200: AuthCapabilitiesSchema,
+        },
+      },
+    },
+    async () => {
+      const accountCount = await database.accounts.count();
+      const localAccount =
+        config.edition === "local" ? await database.accounts.findByUsername("local") : null;
+
+      return {
+        edition: config.edition,
+        localProfileAvailable:
+          config.edition === "local" && (accountCount === 0 || localAccount !== null),
+        registrationOpen: config.edition === "hosted" || accountCount === 0,
+      };
+    },
+  );
 
   typedApp.post(
     "/api/v1/auth/register",
