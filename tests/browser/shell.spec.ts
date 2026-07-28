@@ -182,25 +182,21 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
   await archivedDeleteProjectCard
     .getByRole("button", { name: /Delete project|Projekt löschen/ })
     .click();
-  await expect(page.locator(".delete-project-window")).toBeVisible();
-  const deleteProjectAction = page
-    .locator(".delete-project-window")
-    .getByRole("button", { name: /Delete project|Projekt löschen/ });
+  const deleteConfirmation = archivedDeleteProjectCard.locator(
+    ".project-card__delete-confirmation",
+  );
+  await expect(deleteConfirmation).toBeVisible();
+  const deleteProjectAction = deleteConfirmation.getByRole("button", {
+    name: /Delete project|Projekt löschen/,
+  });
   await expect(deleteProjectAction).toBeDisabled();
-  const deleteProjectNameInput = page.locator("#delete-project-name");
+  const deleteProjectNameInput = deleteConfirmation.locator("input");
   await deleteProjectNameInput.fill(`${deleteProjectName} `);
   await expect(deleteProjectAction).toBeDisabled();
-  await deleteProjectNameInput.fill("");
-  await page
-    .locator(".delete-project-window")
-    .getByRole("button", { name: /Use project name|Projektnamen übernehmen/ })
-    .click();
-  await expect(page.locator(".delete-project-window")).toBeVisible();
+  await deleteProjectNameInput.fill(deleteProjectName);
   await expect(deleteProjectNameInput).toHaveValue(deleteProjectName);
-  await expect(page.locator(".delete-project-window")).toBeVisible();
   await expect(deleteProjectAction).toBeEnabled();
   await deleteProjectAction.click();
-  await expect(page.locator(".delete-project-window")).toHaveCount(0);
   await expect(archivedDeleteProjectCard).toHaveCount(0);
   await page.getByRole("button", { name: /Archive 2026|Archiv 2026/ }).click();
 
