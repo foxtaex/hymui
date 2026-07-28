@@ -1,0 +1,16 @@
+{
+  "name": "@hymui/styles",
+  "version": "6.0.0-dev.0",
+  "private": true,
+  "exports": {
+    "./main.scss": "./src/main.scss"
+  },
+  "scripts": {
+    "build": "sass src/main.scss dist/main.css --no-source-map",
+    "typecheck": "sass src/main.scss /tmp/hymui-styles-check.css --no-source-map",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "sass": "1.102.0"
+  }
+}

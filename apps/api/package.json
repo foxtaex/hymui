@@ -1,0 +1,30 @@
+{
+  "name": "@hymui/api",
+  "version": "6.0.0-dev.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup --config tsup.config.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cookie": "11.1.2",
+    "@fastify/cors": "11.3.0",
+    "@fastify/type-provider-typebox": "6.1.0",
+    "@hymui/config": "workspace:*",
+    "@hymui/contracts": "workspace:*",
+    "@hymui/core": "workspace:*",
+    "@hymui/db": "workspace:*",
+    "@hymui/storage": "workspace:*",
+    "@node-rs/argon2": "2.0.2",
+    "@sinclair/typebox": "0.34.52",
+    "fastify": "5.10.0"
+  },
+  "devDependencies": {
+    "tsup": "8.5.1",
+    "tsx": "4.23.1"
+  }
+}

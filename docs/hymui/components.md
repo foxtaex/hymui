@@ -69,8 +69,11 @@
 - component behavior lives in `.vue` and `.ts` files
 - styles live in standalone `.scss` files
 - design tokens live in `packages/styles`
-- no inline styles, CSS-in-JS, or copied one-off controls
+- no inline static styles, CSS-in-JS, or copied one-off controls
 - feature styles consume tokens instead of hard-coded colors
+- Motion for Vue handles stateful layout, presence, gesture, reorder, and spring animation
+- simple color, focus, and hover transitions remain in SCSS
+- every animation respects the reduced-motion preference
 - all interaction states include focus, hover, active, disabled, loading, and
   error behavior
 

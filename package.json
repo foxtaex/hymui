@@ -1,0 +1,56 @@
+{
+  "name": "hymui",
+  "version": "6.0.0-dev.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "onFail": "error",
+      "version": "11.9.0"
+    },
+    "runtime": {
+      "name": "node",
+      "onFail": "error",
+      "version": ">=22.0.0"
+    }
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others --names web,api,worker --prefix-colors cyan,green,magenta \"pnpm --filter @hymui/web dev\" \"pnpm --filter @hymui/api dev\" \"pnpm --filter @hymui/worker dev\"",
+    "build": "pnpm -r --workspace-concurrency=2 build",
+    "typecheck": "pnpm -r --workspace-concurrency=2 typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:adapters": "vitest run packages/storage/src/index.test.ts packages/db/src/pglite.test.ts",
+    "test:integration": "vitest run tests/integration",
+    "test:browser": "playwright test",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify:ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.0",
+    "@types/node": "24.13.3",
+    "@vitejs/plugin-vue": "6.0.8",
+    "@vue/test-utils": "2.4.11",
+    "@vitest/coverage-v8": "4.1.10",
+    "concurrently": "10.0.4",
+    "eslint": "10.8.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "10.10.0",
+    "globals": "17.7.0",
+    "happy-dom": "20.11.1",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10",
+    "vue-eslint-parser": "10.4.1"
+  }
+}

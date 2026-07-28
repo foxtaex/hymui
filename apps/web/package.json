@@ -1,0 +1,30 @@
+{
+  "name": "@hymui/web",
+  "version": "6.0.0-dev.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev --host 127.0.0.1 --port 3000",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/quicksand": "5.3.0",
+    "@hymui/contracts": "workspace:*",
+    "@hymui/i18n": "workspace:*",
+    "@hymui/styles": "workspace:*",
+    "@hymui/ui": "workspace:*",
+    "@lucide/vue": "1.26.0",
+    "motion-v": "^2.3.0",
+    "nuxt": "4.5.0",
+    "vue": "3.5.40"
+  },
+  "devDependencies": {
+    "sass": "1.102.0",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.8"
+  }
+}
