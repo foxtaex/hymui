@@ -58,9 +58,6 @@ const selectedProjectId = ref<string | null>(null);
 const projectsLoading = ref(false);
 const projectCreating = ref(false);
 const editingProject = ref<Project | null>(null);
-const deletingProject = ref<Project | null>(null);
-const projectDeleting = ref(false);
-const projectDeleteError = ref("");
 const updatingProjectIds = ref<string[]>([]);
 const newProjectOpen = ref(false);
 const newProjectFormKey = ref(0);
@@ -506,11 +503,6 @@ function showProjectEditor(project: Project): void {
   editingProject.value = project;
 }
 
-function showProjectDelete(project: Project): void {
-  projectDeleteError.value = "";
-  deletingProject.value = project;
-}
-
 function showNotice(message: string): void {
   if (noticeTimer) clearTimeout(noticeTimer);
   notice.value = message;
@@ -583,25 +575,28 @@ async function saveProjectDetails(input: {
   }
 }
 
-async function deleteProject(input: { name: string; revision: number }): Promise<void> {
-  const project = deletingProject.value;
-  if (!project || projectDeleting.value) return;
-  projectDeleting.value = true;
-  projectDeleteError.value = "";
+async function deleteProject(input: {
+  name: string;
+  project: Project;
+  revision: number;
+}): Promise<void> {
+  const { project } = input;
+  if (updatingProjectIds.value.includes(project.id)) return;
+  projectError.value = "";
+  updatingProjectIds.value = [...updatingProjectIds.value, project.id];
   try {
     await $fetch(`${runtime.public.apiBase}/api/v1/projects/${project.id}`, {
-      body: input,
+      body: { name: input.name, revision: input.revision },
       credentials: "include",
       method: "DELETE",
     });
     projects.value = projects.value.filter((item) => item.id !== project.id);
-    deletingProject.value = null;
     showNotice(copy.value.projects.deleted);
   } catch {
     await loadProjects();
-    projectDeleteError.value = copy.value.projects.deleteFailed;
+    projectError.value = copy.value.projects.deleteFailed;
   } finally {
-    projectDeleting.value = false;
+    updatingProjectIds.value = updatingProjectIds.value.filter((id) => id !== project.id);
   }
 }
 
@@ -697,18 +692,6 @@ onBeforeUnmount(() => {
       />
     </AnimatePresence>
 
-    <AnimatePresence>
-      <DeleteProjectWindow
-        v-if="deletingProject"
-        :key="`${deletingProject.id}-${deletingProject.revision}`"
-        :error="projectDeleteError"
-        :loading="projectDeleting"
-        :project="deletingProject"
-        @close="deletingProject = null"
-        @delete="deleteProject"
-      />
-    </AnimatePresence>
-
     <AnimatePresence mode="wait" :initial="false">
       <motion.div
         v-if="authInitializing || !authSession"
@@ -769,7 +752,7 @@ onBeforeUnmount(() => {
           :updating-project-ids="updatingProjectIds"
           @archive="updateProjectArchived($event, true)"
           @create="showNewProjectNotice"
-          @delete="showProjectDelete"
+          @delete-project="deleteProject"
           @edit="showProjectEditor"
           @open="openProject"
           @restore="updateProjectArchived($event, false)"
