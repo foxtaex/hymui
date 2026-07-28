@@ -39,6 +39,20 @@ var projects = pgTable("projects", {
   revision: integer("revision").notNull().default(1),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull()
 });
+var projectAttachments = pgTable(
+  "project_attachments",
+  {
+    byteLength: integer("byte_length").notNull(),
+    checksum: text("checksum").notNull(),
+    contentType: text("content_type").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+    fileName: text("file_name").notNull(),
+    id: text("id").primaryKey(),
+    objectKey: text("object_key").notNull(),
+    projectId: text("project_id").notNull().references(() => projects.id, { onDelete: "cascade" })
+  },
+  (table) => [uniqueIndex("project_attachments_object_key_unique").on(table.objectKey)]
+);
 var diagnosticJobs = pgTable("diagnostic_jobs", {
   attempt: integer("attempt").notNull().default(0),
   claimTokenHash: text("claim_token_hash"),
@@ -134,6 +148,20 @@ var durableJobStatements = [
 var projectLinksStatements = [
   `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`
 ];
+var projectAttachmentStatements = [
+  `CREATE TABLE IF NOT EXISTS project_attachments (
+    id text PRIMARY KEY,
+    project_id text NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    object_key text NOT NULL UNIQUE,
+    file_name text NOT NULL,
+    content_type text NOT NULL,
+    byte_length integer NOT NULL,
+    checksum text NOT NULL,
+    created_at timestamptz NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS project_attachments_project_id_index
+    ON project_attachments(project_id, created_at)`
+];
 function migrationChecksum(statements) {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -155,6 +183,12 @@ var hymuiMigrations = [
     id: "0003",
     name: "project_external_links",
     statements: projectLinksStatements
+  },
+  {
+    checksum: migrationChecksum(projectAttachmentStatements),
+    id: "0004",
+    name: "project_attachments",
+    statements: projectAttachmentStatements
   }
 ];
 function actorRecord(row) {
@@ -194,6 +228,18 @@ function projectRecord(row) {
     revision: row.revision,
     updatedAt: row.updatedAt.toISOString()
   };
+}
+function projectAttachmentRecord(row) {
+  const attachment = {
+    byteLength: row.byteLength,
+    checksum: row.checksum,
+    contentType: row.contentType,
+    createdAt: row.createdAt.toISOString(),
+    fileName: row.fileName,
+    id: row.id,
+    projectId: row.projectId
+  };
+  return { ...attachment, objectKey: row.objectKey };
 }
 function diagnosticJobRecord(row) {
   return {
@@ -286,6 +332,17 @@ async function createPgliteDatabase(options = {}) {
       if (!created) throw new PersistenceError("DATABASE_UNAVAILABLE", "Project was not created.");
       return projectRecord(created);
     },
+    async delete(id, actorId, revision) {
+      const [deleted] = await database.delete(projects).where(
+        and(
+          eq(projects.id, id),
+          eq(projects.ownerId, actorId),
+          eq(projects.archived, true),
+          eq(projects.revision, revision)
+        )
+      ).returning();
+      return deleted ? projectRecord(deleted) : null;
+    },
     async findById(id, actorId) {
       const [project] = await database.select().from(projects).where(and(eq(projects.id, id), eq(projects.ownerId, actorId))).limit(1);
       return project ? projectRecord(project) : null;
@@ -326,6 +383,40 @@ async function createPgliteDatabase(options = {}) {
       return projectRecord(updated);
     }
   };
+  const projectAttachmentRepository = {
+    async create(input) {
+      const [project] = await database.select({ id: projects.id }).from(projects).where(and(eq(projects.id, input.projectId), eq(projects.ownerId, input.ownerId))).limit(1);
+      if (!project) return null;
+      const [created] = await database.insert(projectAttachments).values({
+        byteLength: input.byteLength,
+        checksum: input.checksum,
+        contentType: input.contentType,
+        createdAt: input.timestamp,
+        fileName: input.fileName,
+        id: input.id,
+        objectKey: input.objectKey,
+        projectId: input.projectId
+      }).returning();
+      if (!created) {
+        throw new PersistenceError("DATABASE_UNAVAILABLE", "Attachment was not created.");
+      }
+      return projectAttachmentRecord(created);
+    },
+    async delete(id, actorId) {
+      const existing = await this.findById(id, actorId);
+      if (!existing) return null;
+      const [deleted] = await database.delete(projectAttachments).where(eq(projectAttachments.id, id)).returning();
+      return deleted ? projectAttachmentRecord(deleted) : null;
+    },
+    async findById(id, actorId) {
+      const [record] = await database.select({ attachment: projectAttachments }).from(projectAttachments).innerJoin(projects, eq(projectAttachments.projectId, projects.id)).where(and(eq(projectAttachments.id, id), eq(projects.ownerId, actorId))).limit(1);
+      return record ? projectAttachmentRecord(record.attachment) : null;
+    },
+    async listByProject(projectId, actorId) {
+      const records = await database.select({ attachment: projectAttachments }).from(projectAttachments).innerJoin(projects, eq(projectAttachments.projectId, projects.id)).where(and(eq(projectAttachments.projectId, projectId), eq(projects.ownerId, actorId))).orderBy(asc(projectAttachments.createdAt));
+      return records.map((record) => projectAttachmentRecord(record.attachment));
+    }
+  };
   return {
     accounts: {
       async count() {
@@ -361,6 +452,7 @@ async function createPgliteDatabase(options = {}) {
         return actor ? actorRecord(actor) : null;
       }
     },
+    attachments: projectAttachmentRepository,
     async close() {
       await client.close();
     },

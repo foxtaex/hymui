@@ -256,7 +256,7 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
   await registerAuthRoutes(app, database, config);
   await registerAttachmentRoutes(app, database, storage);
   await registerInternalJobRoutes(app, database, config);
-  await registerProjectRoutes(app, database);
+  await registerProjectRoutes(app, database, storage);
 
   return app;
 }

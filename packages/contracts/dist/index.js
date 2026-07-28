@@ -190,6 +190,24 @@ var ProjectSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var ProjectAttachmentSchema = Type.Object(
+  {
+    byteLength: Type.Integer({ minimum: 0 }),
+    checksum: Type.String({ pattern: "^sha256:[0-9a-f]{64}$" }),
+    contentType: Type.String({ maxLength: 255, minLength: 1 }),
+    createdAt: DateTimeSchema,
+    fileName: Type.String({ maxLength: 255, minLength: 1 }),
+    id: UuidSchema,
+    projectId: UuidSchema
+  },
+  { additionalProperties: false }
+);
+var ProjectAttachmentListSchema = Type.Object(
+  {
+    attachments: Type.Array(ProjectAttachmentSchema)
+  },
+  { additionalProperties: false }
+);
 var ProjectListSchema = Type.Object(
   {
     projects: Type.Array(ProjectSchema)
@@ -214,6 +232,13 @@ var UpdateProjectRequestSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var DeleteProjectRequestSchema = Type.Object(
+  {
+    name: Type.String({ maxLength: 120, minLength: 1 }),
+    revision: Type.Integer({ minimum: 1 })
+  },
+  { additionalProperties: false }
+);
 export {
   ActorSchema,
   ApiVersion,
@@ -221,6 +246,7 @@ export {
   AuthSessionSchema,
   CorrelationIdHeader,
   CreateProjectRequestSchema,
+  DeleteProjectRequestSchema,
   DiagnosticJobClaimSchema,
   DiagnosticJobRequestSchema,
   DiagnosticJobSchema,
@@ -230,6 +256,8 @@ export {
   HymuiVersion,
   JobStatusSchema,
   LoginRequestSchema,
+  ProjectAttachmentListSchema,
+  ProjectAttachmentSchema,
   ProjectLinkSchema,
   ProjectListSchema,
   ProjectSchema,

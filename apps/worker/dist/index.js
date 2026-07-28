@@ -269,6 +269,24 @@ var ProjectSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var ProjectAttachmentSchema = Type.Object(
+  {
+    byteLength: Type.Integer({ minimum: 0 }),
+    checksum: Type.String({ pattern: "^sha256:[0-9a-f]{64}$" }),
+    contentType: Type.String({ maxLength: 255, minLength: 1 }),
+    createdAt: DateTimeSchema,
+    fileName: Type.String({ maxLength: 255, minLength: 1 }),
+    id: UuidSchema,
+    projectId: UuidSchema
+  },
+  { additionalProperties: false }
+);
+var ProjectAttachmentListSchema = Type.Object(
+  {
+    attachments: Type.Array(ProjectAttachmentSchema)
+  },
+  { additionalProperties: false }
+);
 var ProjectListSchema = Type.Object(
   {
     projects: Type.Array(ProjectSchema)
@@ -289,6 +307,13 @@ var UpdateProjectRequestSchema = Type.Object(
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
     links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.Optional(Type.String({ maxLength: 120, minLength: 1 })),
+    revision: Type.Integer({ minimum: 1 })
+  },
+  { additionalProperties: false }
+);
+var DeleteProjectRequestSchema = Type.Object(
+  {
+    name: Type.String({ maxLength: 120, minLength: 1 }),
     revision: Type.Integer({ minimum: 1 })
   },
   { additionalProperties: false }

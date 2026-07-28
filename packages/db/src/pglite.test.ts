@@ -101,6 +101,22 @@ describe("PGlite database adapter", () => {
     expect(await database.attachments.findById(attachment!.id, outsider.id)).toBeNull();
     expect(await database.attachments.delete(attachment!.id, actor.id)).toEqual(attachment);
     expect(await database.attachments.listByProject(project.id, actor.id)).toEqual([]);
+
+    expect(await database.projects.delete(project.id, actor.id, project.revision)).toBeNull();
+    const archivedProject = await database.projects.update({
+      archived: true,
+      id: project.id,
+      ownerId: actor.id,
+      revision: project.revision,
+      timestamp,
+    });
+    expect(archivedProject).toMatchObject({ archived: true, revision: 2 });
+    expect(
+      await database.projects.delete(project.id, outsider.id, archivedProject!.revision),
+    ).toBeNull();
+    expect(await database.projects.delete(project.id, actor.id, archivedProject!.revision)).toEqual(
+      archivedProject,
+    );
   });
 
   it("applies the current migration exactly once", async () => {

@@ -38,6 +38,8 @@ const emit = defineEmits<{
 
 const { copy, locale } = useHymuiI18n();
 const attachmentInput = ref<HTMLInputElement | null>(null);
+const attachmentDragActive = ref(false);
+let attachmentDragDepth = 0;
 const updatedAt = computed(() =>
   new Intl.DateTimeFormat(locale.value, { dateStyle: "medium" }).format(
     new Date(props.project.updatedAt),
@@ -61,6 +63,23 @@ function selectAttachment(event: Event): void {
   const input = event.currentTarget as HTMLInputElement;
   const file = input.files?.[0];
   input.value = "";
+  if (file) emit("uploadAttachment", file);
+}
+
+function enterAttachmentDropZone(): void {
+  attachmentDragDepth += 1;
+  attachmentDragActive.value = true;
+}
+
+function leaveAttachmentDropZone(): void {
+  attachmentDragDepth = Math.max(0, attachmentDragDepth - 1);
+  if (attachmentDragDepth === 0) attachmentDragActive.value = false;
+}
+
+function dropAttachment(event: DragEvent): void {
+  attachmentDragDepth = 0;
+  attachmentDragActive.value = false;
+  const file = event.dataTransfer?.files[0];
   if (file) emit("uploadAttachment", file);
 }
 </script>
@@ -150,7 +169,14 @@ function selectAttachment(event: Event): void {
         </HmPanel>
       </div>
 
-      <HmPanel class="project-overview__section project-overview__attachments">
+      <HmPanel
+        class="project-overview__section project-overview__attachments"
+        :class="{ 'project-overview__attachments--drag-active': attachmentDragActive }"
+        @dragenter.prevent="enterAttachmentDropZone"
+        @dragover.prevent
+        @dragleave.prevent="leaveAttachmentDropZone"
+        @drop.prevent="dropAttachment"
+      >
         <header>
           <Paperclip :size="18" :stroke-width="1.5" aria-hidden="true" />
           <h2>{{ copy.projects.attachments }}</h2>
@@ -166,9 +192,13 @@ function selectAttachment(event: Event): void {
             </template>
             {{ copy.projects.attachmentUpload }}
           </HmButton>
+          <span class="project-overview__attachment-drop-hint">
+            {{ copy.projects.attachmentDrop }}
+          </span>
           <input
             ref="attachmentInput"
             class="project-overview__file-input"
+            hidden
             type="file"
             @change="selectAttachment"
           />

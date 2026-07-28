@@ -133,6 +133,7 @@ export interface UpdateProjectInput extends UpdateProjectRequest {
 
 export interface ProjectRepository {
   create(input: CreateProjectInput): Promise<Project>;
+  delete(id: string, actorId: string, revision: number): Promise<Project | null>;
   findById(id: string, actorId: string): Promise<Project | null>;
   listByActor(actorId: string): Promise<readonly Project[]>;
   update(input: UpdateProjectInput): Promise<Project | null>;

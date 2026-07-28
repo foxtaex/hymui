@@ -15,6 +15,7 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 interface _GlobalComponents {
   AuthView: typeof import("../../app/components/AuthView.vue")['default']
+  DeleteProjectWindow: typeof import("../../app/components/DeleteProjectWindow.vue")['default']
   EditProjectWindow: typeof import("../../app/components/EditProjectWindow.vue")['default']
   NewProjectWindow: typeof import("../../app/components/NewProjectWindow.vue")['default']
   ProjectLinksEditor: typeof import("../../app/components/ProjectLinksEditor.vue")['default']
@@ -53,6 +54,7 @@ interface _GlobalComponents {
   Body: typeof import("../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/app/components/nuxt-island")['default']
   LazyAuthView: LazyComponent<typeof import("../../app/components/AuthView.vue")['default']>
+  LazyDeleteProjectWindow: LazyComponent<typeof import("../../app/components/DeleteProjectWindow.vue")['default']>
   LazyEditProjectWindow: LazyComponent<typeof import("../../app/components/EditProjectWindow.vue")['default']>
   LazyNewProjectWindow: LazyComponent<typeof import("../../app/components/NewProjectWindow.vue")['default']>
   LazyProjectLinksEditor: LazyComponent<typeof import("../../app/components/ProjectLinksEditor.vue")['default']>

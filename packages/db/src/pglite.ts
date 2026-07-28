@@ -322,6 +322,20 @@ export async function createPgliteDatabase(
       if (!created) throw new PersistenceError("DATABASE_UNAVAILABLE", "Project was not created.");
       return projectRecord(created);
     },
+    async delete(id: string, actorId: string, revision: number): Promise<Project | null> {
+      const [deleted] = await database
+        .delete(projects)
+        .where(
+          and(
+            eq(projects.id, id),
+            eq(projects.ownerId, actorId),
+            eq(projects.archived, true),
+            eq(projects.revision, revision),
+          ),
+        )
+        .returning();
+      return deleted ? projectRecord(deleted) : null;
+    },
     async findById(id: string, actorId: string): Promise<Project | null> {
       const [project] = await database
         .select()

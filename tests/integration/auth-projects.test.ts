@@ -240,6 +240,74 @@ describe("account sessions and persistent project authorization", () => {
     expect(missingResponse.statusCode).toBe(404);
   });
 
+  it("deletes only an archived project after its exact name is confirmed", async () => {
+    const createResponse = await api.inject({
+      headers: { cookie },
+      method: "POST",
+      payload: { name: "Disposable project" },
+      url: "/api/v1/projects",
+    });
+    const disposable = createResponse.json<Project>();
+    expect(createResponse.statusCode).toBe(201);
+
+    const uploadResponse = await api.inject({
+      headers: {
+        "content-type": "application/octet-stream",
+        cookie,
+        "x-hymui-file-name": "disposable.txt",
+      },
+      method: "POST",
+      payload: Buffer.from("Delete with project", "utf8"),
+      url: `/api/v1/projects/${disposable.id}/attachments`,
+    });
+    const attachment = uploadResponse.json<ProjectAttachment>();
+    expect(uploadResponse.statusCode).toBe(201);
+
+    const activeDeleteResponse = await api.inject({
+      headers: { cookie },
+      method: "DELETE",
+      payload: { name: disposable.name, revision: disposable.revision },
+      url: `/api/v1/projects/${disposable.id}`,
+    });
+    expect(activeDeleteResponse.statusCode).toBe(409);
+    expect(activeDeleteResponse.json()).toMatchObject({ code: "PROJECT_NOT_ARCHIVED" });
+
+    const archiveResponse = await api.inject({
+      headers: { cookie },
+      method: "PATCH",
+      payload: { archived: true, revision: disposable.revision },
+      url: `/api/v1/projects/${disposable.id}`,
+    });
+    const archived = archiveResponse.json<Project>();
+    expect(archiveResponse.statusCode).toBe(200);
+
+    const mismatchResponse = await api.inject({
+      headers: { cookie },
+      method: "DELETE",
+      payload: { name: "Disposable Project", revision: archived.revision },
+      url: `/api/v1/projects/${archived.id}`,
+    });
+    expect(mismatchResponse.statusCode).toBe(400);
+    expect(mismatchResponse.json()).toMatchObject({
+      code: "PROJECT_DELETE_CONFIRMATION_MISMATCH",
+    });
+
+    const deleteResponse = await api.inject({
+      headers: { cookie },
+      method: "DELETE",
+      payload: { name: archived.name, revision: archived.revision },
+      url: `/api/v1/projects/${archived.id}`,
+    });
+    expect(deleteResponse.statusCode).toBe(204);
+
+    const attachmentResponse = await api.inject({
+      headers: { cookie },
+      method: "GET",
+      url: `/api/v1/attachments/${attachment.id}/content`,
+    });
+    expect(attachmentResponse.statusCode).toBe(404);
+  });
+
   it("archives and restores a project with revision checks", async () => {
     const archiveResponse = await api.inject({
       headers: { cookie },

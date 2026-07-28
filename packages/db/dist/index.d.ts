@@ -1,4 +1,4 @@
-import { Actor, DiagnosticJobRequest, CreateProjectRequest, DiagnosticJob, Project, UpdateProjectRequest } from '@hymui/contracts';
+import { Actor, DiagnosticJobRequest, CreateProjectRequest, DiagnosticJob, ProjectAttachment, Project, UpdateProjectRequest } from '@hymui/contracts';
 
 declare const hymuiMigrations: readonly Migration[];
 interface PgliteDatabaseOptions {
@@ -112,12 +112,34 @@ interface UpdateProjectInput extends UpdateProjectRequest {
 }
 interface ProjectRepository {
     create(input: CreateProjectInput): Promise<Project>;
+    delete(id: string, actorId: string, revision: number): Promise<Project | null>;
     findById(id: string, actorId: string): Promise<Project | null>;
     listByActor(actorId: string): Promise<readonly Project[]>;
     update(input: UpdateProjectInput): Promise<Project | null>;
 }
+interface ProjectAttachmentRecord extends ProjectAttachment {
+    readonly objectKey: string;
+}
+interface CreateProjectAttachmentInput {
+    readonly byteLength: number;
+    readonly checksum: string;
+    readonly contentType: string;
+    readonly fileName: string;
+    readonly id: string;
+    readonly objectKey: string;
+    readonly ownerId: string;
+    readonly projectId: string;
+    readonly timestamp: Date;
+}
+interface ProjectAttachmentRepository {
+    create(input: CreateProjectAttachmentInput): Promise<ProjectAttachmentRecord | null>;
+    delete(id: string, actorId: string): Promise<ProjectAttachmentRecord | null>;
+    findById(id: string, actorId: string): Promise<ProjectAttachmentRecord | null>;
+    listByProject(projectId: string, actorId: string): Promise<readonly ProjectAttachmentRecord[]>;
+}
 interface HymuiDatabase {
     readonly accounts: AccountRepository;
+    readonly attachments: ProjectAttachmentRepository;
     readonly kind: DatabaseAdapterKind;
     readonly migrations: MigrationRunner;
     readonly diagnosticJobs: DiagnosticJobRepository;
@@ -130,4 +152,4 @@ declare class PersistenceError extends Error {
     constructor(code: "DATABASE_UNAVAILABLE" | "MIGRATION_CONFLICT" | "MIGRATION_OUT_OF_ORDER" | "PERSISTENCE_DUPLICATE" | "PERSISTENCE_CONFLICT", message: string);
 }
 
-export { type AccountRecord, type AccountRepository, type AppliedMigration, type ClaimDiagnosticJobInput, type CompleteDiagnosticJobInput, type CreateAccountInput, type CreateDiagnosticJobInput, type CreateProjectInput, type CreateSessionInput, type DatabaseAdapterKind, type DiagnosticJobRepository, type FailDiagnosticJobInput, type HeartbeatDiagnosticJobInput, type HymuiDatabase, type Migration, type MigrationRunner, type PersistedDiagnosticJob, PersistenceError, type ProjectRepository, type SessionRecord, type SessionRepository, type UpdateProjectInput, createPgliteDatabase, hymuiMigrations };
+export { type AccountRecord, type AccountRepository, type AppliedMigration, type ClaimDiagnosticJobInput, type CompleteDiagnosticJobInput, type CreateAccountInput, type CreateDiagnosticJobInput, type CreateProjectAttachmentInput, type CreateProjectInput, type CreateSessionInput, type DatabaseAdapterKind, type DiagnosticJobRepository, type FailDiagnosticJobInput, type HeartbeatDiagnosticJobInput, type HymuiDatabase, type Migration, type MigrationRunner, type PersistedDiagnosticJob, PersistenceError, type ProjectAttachmentRecord, type ProjectAttachmentRepository, type ProjectRepository, type SessionRecord, type SessionRepository, type UpdateProjectInput, createPgliteDatabase, hymuiMigrations };

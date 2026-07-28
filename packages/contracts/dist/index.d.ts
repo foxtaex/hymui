@@ -149,6 +149,28 @@ declare const ProjectSchema: _sinclair_typebox.TObject<{
     updatedAt: _sinclair_typebox.TString;
 }>;
 type Project = Static<typeof ProjectSchema>;
+declare const ProjectAttachmentSchema: _sinclair_typebox.TObject<{
+    byteLength: _sinclair_typebox.TInteger;
+    checksum: _sinclair_typebox.TString;
+    contentType: _sinclair_typebox.TString;
+    createdAt: _sinclair_typebox.TString;
+    fileName: _sinclair_typebox.TString;
+    id: _sinclair_typebox.TString;
+    projectId: _sinclair_typebox.TString;
+}>;
+type ProjectAttachment = Static<typeof ProjectAttachmentSchema>;
+declare const ProjectAttachmentListSchema: _sinclair_typebox.TObject<{
+    attachments: _sinclair_typebox.TArray<_sinclair_typebox.TObject<{
+        byteLength: _sinclair_typebox.TInteger;
+        checksum: _sinclair_typebox.TString;
+        contentType: _sinclair_typebox.TString;
+        createdAt: _sinclair_typebox.TString;
+        fileName: _sinclair_typebox.TString;
+        id: _sinclair_typebox.TString;
+        projectId: _sinclair_typebox.TString;
+    }>>;
+}>;
+type ProjectAttachmentList = Static<typeof ProjectAttachmentListSchema>;
 declare const ProjectListSchema: _sinclair_typebox.TObject<{
     projects: _sinclair_typebox.TArray<_sinclair_typebox.TObject<{
         archived: _sinclair_typebox.TBoolean;
@@ -189,5 +211,10 @@ declare const UpdateProjectRequestSchema: _sinclair_typebox.TObject<{
     revision: _sinclair_typebox.TInteger;
 }>;
 type UpdateProjectRequest = Static<typeof UpdateProjectRequestSchema>;
+declare const DeleteProjectRequestSchema: _sinclair_typebox.TObject<{
+    name: _sinclair_typebox.TString;
+    revision: _sinclair_typebox.TInteger;
+}>;
+type DeleteProjectRequest = Static<typeof DeleteProjectRequestSchema>;
 
-export { type Actor, ActorSchema, ApiVersion, type AuthCapabilities, AuthCapabilitiesSchema, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectLink, ProjectLinkSchema, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type StorageAdapterKind, StorageAdapterKindSchema, type StorageHealth, StorageHealthSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };
+export { type Actor, ActorSchema, ApiVersion, type AuthCapabilities, AuthCapabilitiesSchema, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DeleteProjectRequest, DeleteProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectAttachment, type ProjectAttachmentList, ProjectAttachmentListSchema, ProjectAttachmentSchema, type ProjectLink, ProjectLinkSchema, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type StorageAdapterKind, StorageAdapterKindSchema, type StorageHealth, StorageHealthSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };

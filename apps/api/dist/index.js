@@ -92,7 +92,7 @@ function loadRuntimeConfig(service, env = process.env) {
 }
 
 // src/app.ts
-import { randomUUID as randomUUID7 } from "crypto";
+import { randomUUID as randomUUID8 } from "crypto";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 
@@ -288,6 +288,24 @@ var ProjectSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+var ProjectAttachmentSchema = Type.Object(
+  {
+    byteLength: Type.Integer({ minimum: 0 }),
+    checksum: Type.String({ pattern: "^sha256:[0-9a-f]{64}$" }),
+    contentType: Type.String({ maxLength: 255, minLength: 1 }),
+    createdAt: DateTimeSchema,
+    fileName: Type.String({ maxLength: 255, minLength: 1 }),
+    id: UuidSchema,
+    projectId: UuidSchema
+  },
+  { additionalProperties: false }
+);
+var ProjectAttachmentListSchema = Type.Object(
+  {
+    attachments: Type.Array(ProjectAttachmentSchema)
+  },
+  { additionalProperties: false }
+);
 var ProjectListSchema = Type.Object(
   {
     projects: Type.Array(ProjectSchema)
@@ -308,6 +326,13 @@ var UpdateProjectRequestSchema = Type.Object(
     description: Type.Optional(Type.String({ maxLength: 2e3 })),
     links: Type.Optional(Type.Array(ProjectLinkSchema, { maxItems: 20 })),
     name: Type.Optional(Type.String({ maxLength: 120, minLength: 1 })),
+    revision: Type.Integer({ minimum: 1 })
+  },
+  { additionalProperties: false }
+);
+var DeleteProjectRequestSchema = Type.Object(
+  {
+    name: Type.String({ maxLength: 120, minLength: 1 }),
     revision: Type.Integer({ minimum: 1 })
   },
   { additionalProperties: false }
@@ -12506,6 +12531,20 @@ var projects = pgTable("projects", {
   revision: integer("revision").notNull().default(1),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull()
 });
+var projectAttachments = pgTable(
+  "project_attachments",
+  {
+    byteLength: integer("byte_length").notNull(),
+    checksum: text("checksum").notNull(),
+    contentType: text("content_type").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+    fileName: text("file_name").notNull(),
+    id: text("id").primaryKey(),
+    objectKey: text("object_key").notNull(),
+    projectId: text("project_id").notNull().references(() => projects.id, { onDelete: "cascade" })
+  },
+  (table) => [uniqueIndex("project_attachments_object_key_unique").on(table.objectKey)]
+);
 var diagnosticJobs = pgTable("diagnostic_jobs", {
   attempt: integer("attempt").notNull().default(0),
   claimTokenHash: text("claim_token_hash"),
@@ -12601,6 +12640,20 @@ var durableJobStatements = [
 var projectLinksStatements = [
   `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`
 ];
+var projectAttachmentStatements = [
+  `CREATE TABLE IF NOT EXISTS project_attachments (
+    id text PRIMARY KEY,
+    project_id text NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    object_key text NOT NULL UNIQUE,
+    file_name text NOT NULL,
+    content_type text NOT NULL,
+    byte_length integer NOT NULL,
+    checksum text NOT NULL,
+    created_at timestamptz NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS project_attachments_project_id_index
+    ON project_attachments(project_id, created_at)`
+];
 function migrationChecksum(statements) {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -12622,6 +12675,12 @@ var hymuiMigrations = [
     id: "0003",
     name: "project_external_links",
     statements: projectLinksStatements
+  },
+  {
+    checksum: migrationChecksum(projectAttachmentStatements),
+    id: "0004",
+    name: "project_attachments",
+    statements: projectAttachmentStatements
   }
 ];
 function actorRecord(row) {
@@ -12661,6 +12720,18 @@ function projectRecord(row) {
     revision: row.revision,
     updatedAt: row.updatedAt.toISOString()
   };
+}
+function projectAttachmentRecord(row) {
+  const attachment = {
+    byteLength: row.byteLength,
+    checksum: row.checksum,
+    contentType: row.contentType,
+    createdAt: row.createdAt.toISOString(),
+    fileName: row.fileName,
+    id: row.id,
+    projectId: row.projectId
+  };
+  return { ...attachment, objectKey: row.objectKey };
 }
 function diagnosticJobRecord(row) {
   return {
@@ -12753,6 +12824,17 @@ async function createPgliteDatabase(options = {}) {
       if (!created) throw new PersistenceError("DATABASE_UNAVAILABLE", "Project was not created.");
       return projectRecord(created);
     },
+    async delete(id, actorId, revision) {
+      const [deleted] = await database.delete(projects).where(
+        and(
+          eq(projects.id, id),
+          eq(projects.ownerId, actorId),
+          eq(projects.archived, true),
+          eq(projects.revision, revision)
+        )
+      ).returning();
+      return deleted ? projectRecord(deleted) : null;
+    },
     async findById(id, actorId) {
       const [project] = await database.select().from(projects).where(and(eq(projects.id, id), eq(projects.ownerId, actorId))).limit(1);
       return project ? projectRecord(project) : null;
@@ -12793,6 +12875,40 @@ async function createPgliteDatabase(options = {}) {
       return projectRecord(updated);
     }
   };
+  const projectAttachmentRepository = {
+    async create(input) {
+      const [project] = await database.select({ id: projects.id }).from(projects).where(and(eq(projects.id, input.projectId), eq(projects.ownerId, input.ownerId))).limit(1);
+      if (!project) return null;
+      const [created] = await database.insert(projectAttachments).values({
+        byteLength: input.byteLength,
+        checksum: input.checksum,
+        contentType: input.contentType,
+        createdAt: input.timestamp,
+        fileName: input.fileName,
+        id: input.id,
+        objectKey: input.objectKey,
+        projectId: input.projectId
+      }).returning();
+      if (!created) {
+        throw new PersistenceError("DATABASE_UNAVAILABLE", "Attachment was not created.");
+      }
+      return projectAttachmentRecord(created);
+    },
+    async delete(id, actorId) {
+      const existing = await this.findById(id, actorId);
+      if (!existing) return null;
+      const [deleted] = await database.delete(projectAttachments).where(eq(projectAttachments.id, id)).returning();
+      return deleted ? projectAttachmentRecord(deleted) : null;
+    },
+    async findById(id, actorId) {
+      const [record] = await database.select({ attachment: projectAttachments }).from(projectAttachments).innerJoin(projects, eq(projectAttachments.projectId, projects.id)).where(and(eq(projectAttachments.id, id), eq(projects.ownerId, actorId))).limit(1);
+      return record ? projectAttachmentRecord(record.attachment) : null;
+    },
+    async listByProject(projectId, actorId) {
+      const records = await database.select({ attachment: projectAttachments }).from(projectAttachments).innerJoin(projects, eq(projectAttachments.projectId, projects.id)).where(and(eq(projectAttachments.projectId, projectId), eq(projects.ownerId, actorId))).orderBy(asc(projectAttachments.createdAt));
+      return records.map((record) => projectAttachmentRecord(record.attachment));
+    }
+  };
   return {
     accounts: {
       async count() {
@@ -12828,6 +12944,7 @@ async function createPgliteDatabase(options = {}) {
         return actor ? actorRecord(actor) : null;
       }
     },
+    attachments: projectAttachmentRepository,
     async close() {
       await client.close();
     },
@@ -13253,7 +13370,7 @@ async function createFilesystemObjectStorage(options) {
 }
 
 // src/app.ts
-import { Type as Type4 } from "@sinclair/typebox";
+import { Type as Type5 } from "@sinclair/typebox";
 import Fastify from "fastify";
 
 // src/routes/auth.ts
@@ -13526,16 +13643,241 @@ async function registerAuthRoutes(app2, database, config2) {
   );
 }
 
-// src/routes/internal-jobs.ts
-import { createHash as createHash4, randomBytes as randomBytes2, timingSafeEqual } from "crypto";
+// src/routes/attachments.ts
+import { randomUUID as randomUUID6 } from "crypto";
+import { Readable as Readable2 } from "stream";
 import { Type as Type2 } from "@sinclair/typebox";
-var JobParamsSchema = Type2.Object(
+var ProjectAttachmentMaxBytes = 20 * 1024 * 1024;
+var ProjectParamsSchema = Type2.Object(
+  {
+    projectId: Type2.String({ format: "uuid" })
+  },
+  { additionalProperties: false }
+);
+var AttachmentParamsSchema = Type2.Object(
   {
     id: Type2.String({ format: "uuid" })
   },
   { additionalProperties: false }
 );
+var UploadHeadersSchema = Type2.Object(
+  {
+    "content-type": Type2.Literal("application/octet-stream"),
+    "x-hymui-file-content-type": Type2.Optional(Type2.String({ maxLength: 255, minLength: 1 })),
+    "x-hymui-file-name": Type2.String({ maxLength: 1024, minLength: 1 })
+  },
+  { additionalProperties: true }
+);
 function errorResponse2(correlationId, code, message) {
+  return { code, correlationId, message };
+}
+function publicAttachment(record) {
+  return {
+    byteLength: record.byteLength,
+    checksum: record.checksum,
+    contentType: record.contentType,
+    createdAt: record.createdAt,
+    fileName: record.fileName,
+    id: record.id,
+    projectId: record.projectId
+  };
+}
+function normalizeFileName(value) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+  const fileName = [...decoded.split(/[\\/]/).at(-1)?.normalize("NFC") ?? ""].filter((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== void 0 && codePoint > 31 && codePoint !== 127;
+  }).join("").trim();
+  return fileName && fileName.length <= 255 ? fileName : null;
+}
+function contentDisposition(fileName) {
+  const ascii = fileName.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+  return `attachment; filename="${ascii || "attachment"}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+}
+async function* bufferBody(body2) {
+  yield body2;
+}
+async function registerAttachmentRoutes(app2, database, storage) {
+  const typedApp = app2.withTypeProvider();
+  typedApp.get(
+    "/api/v1/projects/:projectId/attachments",
+    {
+      schema: {
+        params: ProjectParamsSchema,
+        response: {
+          200: ProjectAttachmentListSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id");
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply.status(401).send(errorResponse2(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      if (!await database.projects.findById(request.params.projectId, actor.id)) {
+        return reply.status(404).send(errorResponse2(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+      }
+      const attachments = await database.attachments.listByProject(
+        request.params.projectId,
+        actor.id
+      );
+      return reply.send({ attachments: attachments.map(publicAttachment) });
+    }
+  );
+  typedApp.post(
+    "/api/v1/projects/:projectId/attachments",
+    {
+      schema: {
+        headers: UploadHeadersSchema,
+        params: ProjectParamsSchema,
+        response: {
+          201: ProjectAttachmentSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          413: ErrorResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id");
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply.status(401).send(errorResponse2(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      if (!await database.projects.findById(request.params.projectId, actor.id)) {
+        return reply.status(404).send(errorResponse2(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+      }
+      const fileName = normalizeFileName(request.headers["x-hymui-file-name"]);
+      if (!fileName) {
+        return reply.status(400).send(errorResponse2(correlationId, "ATTACHMENT_NAME_INVALID", "File name is invalid."));
+      }
+      const contentType = request.headers["x-hymui-file-content-type"]?.trim() || "application/octet-stream";
+      const body2 = request.body;
+      if (!Buffer.isBuffer(body2)) {
+        return reply.status(400).send(
+          errorResponse2(correlationId, "ATTACHMENT_BODY_REQUIRED", "File content is required.")
+        );
+      }
+      if (body2.byteLength > ProjectAttachmentMaxBytes) {
+        return reply.status(413).send(errorResponse2(correlationId, "ATTACHMENT_TOO_LARGE", "File is too large."));
+      }
+      const id = randomUUID6();
+      const objectKey = `project-attachments/${id}`;
+      const metadata2 = await storage.put({
+        body: bufferBody(body2),
+        contentType,
+        key: objectKey
+      });
+      try {
+        const attachment = await database.attachments.create({
+          byteLength: metadata2.byteLength,
+          checksum: metadata2.checksum,
+          contentType: metadata2.contentType,
+          fileName,
+          id,
+          objectKey,
+          ownerId: actor.id,
+          projectId: request.params.projectId,
+          timestamp: metadata2.createdAt
+        });
+        if (!attachment) {
+          await storage.delete(objectKey);
+          return reply.status(404).send(errorResponse2(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+        }
+        return reply.status(201).send(publicAttachment(attachment));
+      } catch (error) {
+        await storage.delete(objectKey);
+        throw error;
+      }
+    }
+  );
+  app2.get(
+    "/api/v1/attachments/:id/content",
+    {
+      schema: {
+        params: AttachmentParamsSchema,
+        response: {
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id");
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply.status(401).send(errorResponse2(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      const attachment = await database.attachments.findById(request.params.id, actor.id);
+      if (!attachment) {
+        return reply.status(404).send(errorResponse2(correlationId, "ATTACHMENT_NOT_FOUND", "Attachment was not found."));
+      }
+      const stored = await storage.get(attachment.objectKey);
+      if (!stored) {
+        return reply.status(404).send(
+          errorResponse2(
+            correlationId,
+            "ATTACHMENT_CONTENT_NOT_FOUND",
+            "Attachment content was not found."
+          )
+        );
+      }
+      reply.header("content-disposition", contentDisposition(attachment.fileName)).header("content-length", stored.metadata.byteLength).header("content-type", attachment.contentType);
+      return reply.send(Readable2.from(stored.body));
+    }
+  );
+  typedApp.delete(
+    "/api/v1/attachments/:id",
+    {
+      schema: {
+        params: AttachmentParamsSchema,
+        response: {
+          204: Type2.Null(),
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id");
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply.status(401).send(errorResponse2(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      const attachment = await database.attachments.findById(request.params.id, actor.id);
+      if (!attachment) {
+        return reply.status(404).send(errorResponse2(correlationId, "ATTACHMENT_NOT_FOUND", "Attachment was not found."));
+      }
+      try {
+        await storage.delete(attachment.objectKey);
+      } catch (error) {
+        if (!(error instanceof StorageError && error.code === "OBJECT_NOT_FOUND")) throw error;
+      }
+      await database.attachments.delete(attachment.id, actor.id);
+      return reply.status(204).send(null);
+    }
+  );
+}
+
+// src/routes/internal-jobs.ts
+import { createHash as createHash4, randomBytes as randomBytes2, timingSafeEqual } from "crypto";
+import { Type as Type3 } from "@sinclair/typebox";
+var JobParamsSchema = Type3.Object(
+  {
+    id: Type3.String({ format: "uuid" })
+  },
+  { additionalProperties: false }
+);
+function errorResponse3(correlationId, code, message) {
   return { code, correlationId, message };
 }
 function tokenHash(token) {
@@ -13567,7 +13909,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
         body: WorkerClaimRequestSchema,
         response: {
           200: DiagnosticJobClaimSchema,
-          204: Type2.Null(),
+          204: Type3.Null(),
           401: ErrorResponseSchema
         }
       }
@@ -13576,7 +13918,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       if (!isInternalRequest(request, config2.internalToken)) {
         return reply.status(401).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "INTERNAL_AUTH_REQUIRED",
             "Internal authorization failed."
@@ -13618,7 +13960,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       if (!isInternalRequest(request, config2.internalToken)) {
         return reply.status(401).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "INTERNAL_AUTH_REQUIRED",
             "Internal authorization failed."
@@ -13634,7 +13976,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       });
       if (!job) {
         return reply.status(409).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "JOB_LEASE_CONFLICT",
             "The job lease is no longer active."
@@ -13661,7 +14003,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       if (!isInternalRequest(request, config2.internalToken)) {
         return reply.status(401).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "INTERNAL_AUTH_REQUIRED",
             "Internal authorization failed."
@@ -13676,7 +14018,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       });
       if (!job) {
         return reply.status(409).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "JOB_LEASE_CONFLICT",
             "The job lease is no longer active."
@@ -13703,7 +14045,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       if (!isInternalRequest(request, config2.internalToken)) {
         return reply.status(401).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "INTERNAL_AUTH_REQUIRED",
             "Internal authorization failed."
@@ -13718,7 +14060,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
       });
       if (!job) {
         return reply.status(409).send(
-          errorResponse2(
+          errorResponse3(
             correlationId,
             "JOB_LEASE_CONFLICT",
             "The job lease is no longer active."
@@ -13731,15 +14073,15 @@ async function registerInternalJobRoutes(app2, database, config2) {
 }
 
 // src/routes/projects.ts
-import { randomUUID as randomUUID6 } from "crypto";
-import { Type as Type3 } from "@sinclair/typebox";
-var ProjectParamsSchema = Type3.Object(
+import { randomUUID as randomUUID7 } from "crypto";
+import { Type as Type4 } from "@sinclair/typebox";
+var ProjectParamsSchema2 = Type4.Object(
   {
-    id: Type3.String({ format: "uuid" })
+    id: Type4.String({ format: "uuid" })
   },
   { additionalProperties: false }
 );
-function errorResponse3(correlationId, code, message) {
+function errorResponse4(correlationId, code, message) {
   return { code, correlationId, message };
 }
 function normalizedLinks(links) {
@@ -13749,7 +14091,7 @@ function normalizedLinks(links) {
     url: link.url.trim()
   }));
 }
-async function registerProjectRoutes(app2, database) {
+async function registerProjectRoutes(app2, database, storage) {
   const typedApp = app2.withTypeProvider();
   typedApp.get(
     "/api/v1/projects",
@@ -13765,7 +14107,7 @@ async function registerProjectRoutes(app2, database) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       const actor = await authenticatedActor(request, database);
       if (!actor) {
-        return reply.status(401).send(errorResponse3(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+        return reply.status(401).send(errorResponse4(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
       return reply.send({ projects: [...await database.projects.listByActor(actor.id)] });
     }
@@ -13786,18 +14128,18 @@ async function registerProjectRoutes(app2, database) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       const actor = await authenticatedActor(request, database);
       if (!actor) {
-        return reply.status(401).send(errorResponse3(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+        return reply.status(401).send(errorResponse4(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
       if (!request.body.name.trim()) {
-        return reply.status(400).send(errorResponse3(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required."));
+        return reply.status(400).send(errorResponse4(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required."));
       }
       const links = normalizedLinks(request.body.links);
       if (links?.some((link) => !link.label)) {
-        return reply.status(400).send(errorResponse3(correlationId, "PROJECT_LINK_INVALID", "Link labels are required."));
+        return reply.status(400).send(errorResponse4(correlationId, "PROJECT_LINK_INVALID", "Link labels are required."));
       }
       const project = await database.projects.create({
         ...request.body.description === void 0 ? {} : { description: request.body.description },
-        id: randomUUID6(),
+        id: randomUUID7(),
         ...links === void 0 ? {} : { links },
         name: request.body.name.trim(),
         ownerId: actor.id,
@@ -13811,7 +14153,7 @@ async function registerProjectRoutes(app2, database) {
     {
       schema: {
         body: UpdateProjectRequestSchema,
-        params: ProjectParamsSchema,
+        params: ProjectParamsSchema2,
         response: {
           200: ProjectSchema,
           400: ErrorResponseSchema,
@@ -13825,18 +14167,18 @@ async function registerProjectRoutes(app2, database) {
       const correlationId = reply.getHeader("x-hymui-correlation-id");
       const actor = await authenticatedActor(request, database);
       if (!actor) {
-        return reply.status(401).send(errorResponse3(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+        return reply.status(401).send(errorResponse4(correlationId, "AUTH_REQUIRED", "Authentication is required."));
       }
       try {
         if (request.body.name !== void 0 && !request.body.name.trim()) {
           return reply.status(400).send(
-            errorResponse3(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required.")
+            errorResponse4(correlationId, "PROJECT_NAME_REQUIRED", "Project name is required.")
           );
         }
         const links = normalizedLinks(request.body.links);
         if (links?.some((link) => !link.label)) {
           return reply.status(400).send(
-            errorResponse3(correlationId, "PROJECT_LINK_INVALID", "Link labels are required.")
+            errorResponse4(correlationId, "PROJECT_LINK_INVALID", "Link labels are required.")
           );
         }
         const project = await database.projects.update({
@@ -13848,13 +14190,13 @@ async function registerProjectRoutes(app2, database) {
           timestamp: /* @__PURE__ */ new Date()
         });
         if (!project) {
-          return reply.status(404).send(errorResponse3(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+          return reply.status(404).send(errorResponse4(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
         }
         return reply.send(project);
       } catch (error) {
         if (error instanceof PersistenceError && error.code === "PERSISTENCE_CONFLICT") {
           return reply.status(409).send(
-            errorResponse3(
+            errorResponse4(
               correlationId,
               "PROJECT_REVISION_CONFLICT",
               "Project changed after it was loaded."
@@ -13865,12 +14207,87 @@ async function registerProjectRoutes(app2, database) {
       }
     }
   );
+  typedApp.delete(
+    "/api/v1/projects/:id",
+    {
+      schema: {
+        body: DeleteProjectRequestSchema,
+        params: ProjectParamsSchema2,
+        response: {
+          204: Type4.Null(),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      }
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id");
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply.status(401).send(errorResponse4(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      const project = await database.projects.findById(request.params.id, actor.id);
+      if (!project) {
+        return reply.status(404).send(errorResponse4(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+      }
+      if (!project.archived) {
+        return reply.status(409).send(
+          errorResponse4(
+            correlationId,
+            "PROJECT_NOT_ARCHIVED",
+            "Only archived projects can be deleted."
+          )
+        );
+      }
+      if (request.body.name !== project.name) {
+        return reply.status(400).send(
+          errorResponse4(
+            correlationId,
+            "PROJECT_DELETE_CONFIRMATION_MISMATCH",
+            "Project name does not match."
+          )
+        );
+      }
+      if (request.body.revision !== project.revision) {
+        return reply.status(409).send(
+          errorResponse4(
+            correlationId,
+            "PROJECT_REVISION_CONFLICT",
+            "Project changed after it was loaded."
+          )
+        );
+      }
+      const attachments = await database.attachments.listByProject(project.id, actor.id);
+      const deleted = await database.projects.delete(project.id, actor.id, project.revision);
+      if (!deleted) {
+        return reply.status(409).send(
+          errorResponse4(
+            correlationId,
+            "PROJECT_REVISION_CONFLICT",
+            "Project changed while it was being deleted."
+          )
+        );
+      }
+      const storageResults = await Promise.allSettled(
+        attachments.map((attachment) => storage.delete(attachment.objectKey))
+      );
+      if (storageResults.some((result) => result.status === "rejected")) {
+        request.log.warn(
+          { correlationId, projectId: project.id },
+          "Project deleted with orphaned attachment objects"
+        );
+      }
+      return reply.status(204).send(null);
+    }
+  );
 }
 
 // src/app.ts
-var JobParamsSchema2 = Type4.Object(
+var JobParamsSchema2 = Type5.Object(
   {
-    id: Type4.String({ format: "uuid" })
+    id: Type5.String({ format: "uuid" })
   },
   { additionalProperties: false }
 );
@@ -13878,7 +14295,7 @@ function correlationIdFrom(headers) {
   const value = headers[CorrelationIdHeader];
   return resolveCorrelationId(typeof value === "string" ? value : void 0);
 }
-function errorResponse4(correlationId, code, message) {
+function errorResponse5(correlationId, code, message) {
   return { code, correlationId, message };
 }
 async function buildApiApp(options = {}) {
@@ -13907,12 +14324,24 @@ async function buildApiApp(options = {}) {
   const app2 = Fastify({ logger: options.logger ?? true }).withTypeProvider();
   await app2.register(cookie);
   await app2.register(cors, {
-    allowedHeaders: ["content-type", CorrelationIdHeader],
+    allowedHeaders: [
+      "content-type",
+      CorrelationIdHeader,
+      "x-hymui-file-content-type",
+      "x-hymui-file-name"
+    ],
     credentials: true,
     exposedHeaders: [CorrelationIdHeader],
     methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
     origin: true
   });
+  app2.addContentTypeParser(
+    "application/octet-stream",
+    { bodyLimit: ProjectAttachmentMaxBytes, parseAs: "buffer" },
+    (_request, body2, done) => {
+      done(null, body2);
+    }
+  );
   if (ownsDatabase) {
     app2.addHook("onClose", async () => {
       await database.close();
@@ -13925,12 +14354,13 @@ async function buildApiApp(options = {}) {
   app2.setErrorHandler((error, request, reply) => {
     const correlationId = correlationIdFrom(request.headers);
     const isValidationError = typeof error === "object" && error !== null && "validation" in error;
+    const isTooLarge = typeof error === "object" && error !== null && "statusCode" in error && error.statusCode === 413;
     request.log.error({ correlationId, error }, "Request failed");
-    reply.status(isValidationError ? 400 : 500).send(
-      errorResponse4(
+    reply.status(isTooLarge ? 413 : isValidationError ? 400 : 500).send(
+      errorResponse5(
         correlationId,
-        isValidationError ? "INVALID_REQUEST" : "INTERNAL_ERROR",
-        isValidationError ? "The request does not match the API contract." : "The request failed."
+        isTooLarge ? "ATTACHMENT_TOO_LARGE" : isValidationError ? "INVALID_REQUEST" : "INTERNAL_ERROR",
+        isTooLarge ? "The uploaded file is too large." : isValidationError ? "The request does not match the API contract." : "The request failed."
       )
     );
   });
@@ -13987,7 +14417,7 @@ async function buildApiApp(options = {}) {
       const correlationId = correlationIdFrom(request.headers);
       const job = await database.diagnosticJobs.create({
         correlationId,
-        id: randomUUID7(),
+        id: randomUUID8(),
         request: request.body,
         timestamp: /* @__PURE__ */ new Date()
       });
@@ -14011,7 +14441,7 @@ async function buildApiApp(options = {}) {
       const correlationId = correlationIdFrom(request.headers);
       const job = await database.diagnosticJobs.get(request.params.id);
       if (!job) {
-        return reply.status(404).send(errorResponse4(correlationId, "JOB_NOT_FOUND", "The job was not found."));
+        return reply.status(404).send(errorResponse5(correlationId, "JOB_NOT_FOUND", "The job was not found."));
       }
       return reply.send(job);
     }
@@ -14032,14 +14462,15 @@ async function buildApiApp(options = {}) {
       const correlationId = correlationIdFrom(request.headers);
       const job = await database.diagnosticJobs.cancel(request.params.id, /* @__PURE__ */ new Date());
       if (!job) {
-        return reply.status(404).send(errorResponse4(correlationId, "JOB_NOT_FOUND", "The job was not found."));
+        return reply.status(404).send(errorResponse5(correlationId, "JOB_NOT_FOUND", "The job was not found."));
       }
       return reply.send(job);
     }
   );
   await registerAuthRoutes(app2, database, config2);
+  await registerAttachmentRoutes(app2, database, storage);
   await registerInternalJobRoutes(app2, database, config2);
-  await registerProjectRoutes(app2, database);
+  await registerProjectRoutes(app2, database, storage);
   return app2;
 }
 

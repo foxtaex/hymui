@@ -41,6 +41,7 @@ Implementation slices 1–6 are complete for the Local/PGlite path:
 - owner-authorized Project attachment metadata and API routes
 - Project attachment upload, listing, integrity-checked download, and deletion
 - a reusable Project attachment interface in the English and German Web app
+- guarded deletion of archived Projects with exact-name and revision confirmation
 
 The complete Plan 02 remains in progress. PostgreSQL/MySQL/MariaDB adapters,
 cloud object-storage adapters, and the full CI matrix are the next slices.

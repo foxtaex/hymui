@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import {
   CreateProjectRequestSchema,
+  DeleteProjectRequestSchema,
   ErrorResponseSchema,
   ProjectListSchema,
   ProjectSchema,
@@ -10,6 +11,7 @@ import {
   type ErrorResponse,
 } from "@hymui/contracts";
 import { PersistenceError, type HymuiDatabase } from "@hymui/db";
+import type { ObjectStorage } from "@hymui/storage";
 import { Type } from "@sinclair/typebox";
 import type { FastifyInstance } from "fastify";
 
@@ -39,6 +41,7 @@ function normalizedLinks(
 export async function registerProjectRoutes(
   app: FastifyInstance,
   database: HymuiDatabase,
+  storage: ObjectStorage,
 ): Promise<void> {
   const typedApp = app.withTypeProvider<TypeBoxTypeProvider>();
 
@@ -176,6 +179,95 @@ export async function registerProjectRoutes(
         }
         throw error;
       }
+    },
+  );
+
+  typedApp.delete(
+    "/api/v1/projects/:id",
+    {
+      schema: {
+        body: DeleteProjectRequestSchema,
+        params: ProjectParamsSchema,
+        response: {
+          204: Type.Null(),
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const correlationId = reply.getHeader("x-hymui-correlation-id") as string;
+      const actor = await authenticatedActor(request, database);
+      if (!actor) {
+        return reply
+          .status(401)
+          .send(errorResponse(correlationId, "AUTH_REQUIRED", "Authentication is required."));
+      }
+      const project = await database.projects.findById(request.params.id, actor.id);
+      if (!project) {
+        return reply
+          .status(404)
+          .send(errorResponse(correlationId, "PROJECT_NOT_FOUND", "Project was not found."));
+      }
+      if (!project.archived) {
+        return reply
+          .status(409)
+          .send(
+            errorResponse(
+              correlationId,
+              "PROJECT_NOT_ARCHIVED",
+              "Only archived projects can be deleted.",
+            ),
+          );
+      }
+      if (request.body.name !== project.name) {
+        return reply
+          .status(400)
+          .send(
+            errorResponse(
+              correlationId,
+              "PROJECT_DELETE_CONFIRMATION_MISMATCH",
+              "Project name does not match.",
+            ),
+          );
+      }
+      if (request.body.revision !== project.revision) {
+        return reply
+          .status(409)
+          .send(
+            errorResponse(
+              correlationId,
+              "PROJECT_REVISION_CONFLICT",
+              "Project changed after it was loaded.",
+            ),
+          );
+      }
+
+      const attachments = await database.attachments.listByProject(project.id, actor.id);
+      const deleted = await database.projects.delete(project.id, actor.id, project.revision);
+      if (!deleted) {
+        return reply
+          .status(409)
+          .send(
+            errorResponse(
+              correlationId,
+              "PROJECT_REVISION_CONFLICT",
+              "Project changed while it was being deleted.",
+            ),
+          );
+      }
+      const storageResults = await Promise.allSettled(
+        attachments.map((attachment) => storage.delete(attachment.objectKey)),
+      );
+      if (storageResults.some((result) => result.status === "rejected")) {
+        request.log.warn(
+          { correlationId, projectId: project.id },
+          "Project deleted with orphaned attachment objects",
+        );
+      }
+      return reply.status(204).send(null);
     },
   );
 }

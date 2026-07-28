@@ -21,6 +21,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Trash2,
 } from "@lucide/vue";
 
 const props = defineProps<{
@@ -39,6 +40,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   archive: [project: Project];
   create: [];
+  delete: [project: Project];
   edit: [project: Project];
   open: [project: Project];
   restore: [project: Project];
@@ -185,15 +187,26 @@ function isUpdating(project: Project): boolean {
                 <h2>{{ project.name }}</h2>
                 <p>{{ project.description }}</p>
               </div>
-              <HmIconButton
-                :disabled="isUpdating(project)"
-                :label="copy.projects.restoreProject"
-                size="sm"
-                variant="quiet"
-                @click="emit('restore', project)"
-              >
-                <RotateCcw :size="15" :stroke-width="1.6" />
-              </HmIconButton>
+              <div class="project-card__actions">
+                <HmIconButton
+                  :disabled="isUpdating(project)"
+                  :label="copy.projects.restoreProject"
+                  size="sm"
+                  variant="quiet"
+                  @click="emit('restore', project)"
+                >
+                  <RotateCcw :size="15" :stroke-width="1.6" />
+                </HmIconButton>
+                <HmIconButton
+                  :disabled="isUpdating(project)"
+                  :label="copy.projects.deleteProject"
+                  size="sm"
+                  variant="danger"
+                  @click="emit('delete', project)"
+                >
+                  <Trash2 :size="15" :stroke-width="1.6" />
+                </HmIconButton>
+              </div>
             </div>
             <div class="project-card__meta">
               <span>{{ formatProjectDate(project.updatedAt) }}</span>

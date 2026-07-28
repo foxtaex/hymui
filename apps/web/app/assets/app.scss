@@ -315,10 +315,20 @@
 
   &__attachments {
     min-height: 0;
+    transition:
+      background-color var(--motion-fast) var(--ease-out),
+      border-color var(--motion-fast) var(--ease-out),
+      transform var(--motion-fast) var(--ease-out);
 
     header {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: auto 1fr auto auto;
+    }
+
+    &--drag-active {
+      background: color-mix(in srgb, var(--hm-mint) 12%, var(--glass-panel-fill));
+      border-color: color-mix(in srgb, var(--hm-mint) 58%, var(--glass-seam));
+      transform: scale(1.005);
     }
   }
 
@@ -328,6 +338,11 @@
 
   &__file-input {
     display: none;
+  }
+
+  &__attachment-drop-hint {
+    color: var(--color-text-muted);
+    font-size: var(--text-caption-size);
   }
 
   &__attachment-error {
@@ -684,6 +699,59 @@
   }
 }
 
+.delete-project-window {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+
+  &__header,
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  &__warning {
+    display: grid;
+    padding: var(--space-4);
+    color: var(--color-danger);
+    background: var(--color-danger-tint);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+    border-radius: var(--radius-md);
+    gap: var(--space-3);
+    grid-template-columns: auto 1fr;
+
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+
+  &__confirmation {
+    display: grid;
+    margin: 0;
+    color: var(--color-text-muted);
+    gap: var(--space-2);
+    line-height: 1.5;
+
+    strong {
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__actions {
+    gap: var(--space-4);
+    justify-content: flex-end;
+  }
+}
+
 .project-links-editor {
   display: grid;
   gap: var(--space-4);
@@ -795,7 +863,7 @@
 
   &__hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-5);
     padding: var(--space-8);
 
@@ -810,6 +878,11 @@
       margin: 0;
       color: var(--color-text-muted);
       line-height: 1.6;
+    }
+
+    .hm-badge {
+      align-self: start;
+      justify-self: start;
     }
   }
 
@@ -961,6 +1034,11 @@
       .project-overview__attachment-upload {
         grid-column: 1 / -1;
         justify-self: stretch;
+      }
+
+      .project-overview__attachment-drop-hint {
+        grid-column: 1 / -1;
+        text-align: center;
       }
     }
   }

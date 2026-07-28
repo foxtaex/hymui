@@ -106,6 +106,46 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
     page.locator('.hm-app-shell__nav-item--active[aria-label="Projects"]'),
   ).toBeVisible();
   await expect(page.locator('.hm-app-shell__nav-item--active[aria-label="Board"]')).toHaveCount(0);
+  const revisionBadge = page.locator(".project-overview__hero .hm-badge");
+  await expect(revisionBadge).toBeVisible();
+  await expect
+    .poll(async () => (await revisionBadge.boundingBox())?.height ?? Number.POSITIVE_INFINITY)
+    .toBeLessThan(60);
+
+  const attachmentInput = page.locator(".project-overview__file-input");
+  await expect(attachmentInput).toBeHidden();
+  await attachmentInput.setInputFiles({
+    buffer: Buffer.from("Browser attachment", "utf8"),
+    mimeType: "text/plain",
+    name: "browser-notes.txt",
+  });
+  const attachmentRow = page
+    .locator(".project-overview__attachment-list li")
+    .filter({ hasText: "browser-notes.txt" });
+  await expect(attachmentRow).toBeVisible();
+  await attachmentRow.getByRole("button", { name: /Delete attachment|Anhang löschen/ }).click();
+  await expect(attachmentRow).toHaveCount(0);
+
+  const attachmentDropZone = page.locator(".project-overview__attachments");
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(
+      new File(["Dropped browser attachment"], "dropped-notes.txt", { type: "text/plain" }),
+    );
+    return transfer;
+  });
+  await attachmentDropZone.dispatchEvent("dragenter", { dataTransfer });
+  await expect(attachmentDropZone).toHaveClass(/project-overview__attachments--drag-active/);
+  await attachmentDropZone.dispatchEvent("drop", { dataTransfer });
+  const droppedAttachmentRow = page
+    .locator(".project-overview__attachment-list li")
+    .filter({ hasText: "dropped-notes.txt" });
+  await expect(droppedAttachmentRow).toBeVisible();
+  await droppedAttachmentRow
+    .getByRole("button", { name: /Delete attachment|Anhang löschen/ })
+    .click();
+  await expect(droppedAttachmentRow).toHaveCount(0);
+  await dataTransfer.dispose();
 
   const overviewName = await page.locator(".project-overview__hero h1").innerText();
   await page.getByRole("button", { name: /Edit project|Projekt bearbeiten/ }).click();
@@ -121,6 +161,40 @@ test("opens a persisted profile, runs diagnostics, and switches language", async
 
   await page.getByRole("button", { name: /All projects|Alle Projekte/ }).click();
   await expect(page.locator(".projects-page")).toBeVisible();
+
+  const deleteProjectName = `Delete browser ${Date.now()}`;
+  await page
+    .locator(".page-heading__actions")
+    .getByRole("button", { name: /New project|Neues Projekt/ })
+    .click();
+  await page.locator("#new-project-name").fill(deleteProjectName);
+  await page.getByRole("button", { name: /Create project|Projekt erstellen/ }).click();
+  const deleteProjectCard = page
+    .locator(".project-card:not(.project-card--archived)")
+    .filter({ hasText: deleteProjectName });
+  await deleteProjectCard
+    .getByRole("button", { name: /Archive project|Projekt archivieren/ })
+    .click();
+  await page.getByRole("button", { name: /Archive 2026|Archiv 2026/ }).click();
+  const archivedDeleteProjectCard = page
+    .locator(".project-card--archived")
+    .filter({ hasText: deleteProjectName });
+  await archivedDeleteProjectCard
+    .getByRole("button", { name: /Delete project|Projekt löschen/ })
+    .click();
+  await expect(page.locator(".delete-project-window")).toBeVisible();
+  const deleteProjectAction = page
+    .locator(".delete-project-window")
+    .getByRole("button", { name: /Delete project|Projekt löschen/ });
+  await expect(deleteProjectAction).toBeDisabled();
+  await page.locator("#delete-project-name").fill(`${deleteProjectName} `);
+  await expect(deleteProjectAction).toBeDisabled();
+  await page.locator("#delete-project-name").fill(deleteProjectName);
+  await expect(deleteProjectAction).toBeEnabled();
+  await deleteProjectAction.click();
+  await expect(page.locator(".delete-project-window")).toHaveCount(0);
+  await expect(archivedDeleteProjectCard).toHaveCount(0);
+  await page.getByRole("button", { name: /Archive 2026|Archiv 2026/ }).click();
 
   const profileAction = page.getByTestId("user-settings-action");
   await profileAction.click();

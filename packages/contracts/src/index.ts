@@ -289,3 +289,12 @@ export const UpdateProjectRequestSchema = Type.Object(
   { additionalProperties: false },
 );
 export type UpdateProjectRequest = Static<typeof UpdateProjectRequestSchema>;
+
+export const DeleteProjectRequestSchema = Type.Object(
+  {
+    name: Type.String({ maxLength: 120, minLength: 1 }),
+    revision: Type.Integer({ minimum: 1 }),
+  },
+  { additionalProperties: false },
+);
+export type DeleteProjectRequest = Static<typeof DeleteProjectRequestSchema>;
