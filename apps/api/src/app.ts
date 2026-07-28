@@ -17,6 +17,7 @@ import {
 } from "@hymui/contracts";
 import { resolveCorrelationId } from "@hymui/core";
 import { createPgliteDatabase, type HymuiDatabase } from "@hymui/db";
+import { createFilesystemObjectStorage, type ObjectStorage } from "@hymui/storage";
 import { Type } from "@sinclair/typebox";
 import Fastify, { type FastifyInstance } from "fastify";
 
@@ -29,6 +30,7 @@ export interface BuildApiOptions {
   database?: HymuiDatabase;
   fetch?: typeof globalThis.fetch;
   logger?: boolean;
+  storage?: ObjectStorage;
 }
 
 const JobParamsSchema = Type.Object(
@@ -59,6 +61,21 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
   const database =
     options.database ??
     (await createPgliteDatabase(config.databaseUrl ? { dataDirectory: config.databaseUrl } : {}));
+  if (options.storage && options.storage.kind !== config.storageDriver) {
+    throw new Error(
+      `Configured storage driver "${config.storageDriver}" does not match injected adapter "${options.storage.kind}".`,
+    );
+  }
+  if (!options.storage && config.storageDriver !== "filesystem") {
+    throw new Error(
+      `Storage driver "${config.storageDriver}" is not implemented in the current Plan 02 slice.`,
+    );
+  }
+  const storage =
+    options.storage ??
+    (await createFilesystemObjectStorage({
+      rootDirectory: config.storagePath ?? ".hymui/storage",
+    }));
   const app = Fastify({ logger: options.logger ?? true }).withTypeProvider<TypeBoxTypeProvider>();
 
   await app.register(cookie);
@@ -128,6 +145,10 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
         mode: config.mode,
         service: "api" as const,
         state: worker === "ready" ? ("ready" as const) : ("degraded" as const),
+        storage: {
+          kind: storage.kind,
+          state: "ready" as const,
+        },
         timestamp: new Date().toISOString(),
         version: HymuiVersion,
         worker,

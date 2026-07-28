@@ -95,6 +95,7 @@ declare const messages: {
             readonly externalLink: "External link";
             readonly linkInvalid: "Enter a label and a valid http or https URL.";
             readonly linkLabel: "Link label";
+            readonly links: "Project links";
             readonly linkType: "Link type";
             readonly linkUrl: "URL";
             readonly name: "Project name";
@@ -215,6 +216,7 @@ declare const messages: {
             readonly externalLink: "Externer Link";
             readonly linkInvalid: "Gib einen Namen und eine gültige http- oder https-URL ein.";
             readonly linkLabel: "Linkname";
+            readonly links: "Projektlinks";
             readonly linkType: "Linktyp";
             readonly linkUrl: "URL";
             readonly name: "Projektname";

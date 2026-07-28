@@ -18,6 +18,7 @@
     "@hymui/contracts": "workspace:*",
     "@hymui/core": "workspace:*",
     "@hymui/db": "workspace:*",
+    "@hymui/storage": "workspace:*",
     "@node-rs/argon2": "2.0.2",
     "@sinclair/typebox": "0.34.52",
     "fastify": "5.10.0"

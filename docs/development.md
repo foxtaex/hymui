@@ -122,6 +122,25 @@ before API or Worker startup.
 Browser-visible values use Nuxt's `NUXT_PUBLIC_` prefix. Secrets must never use that prefix and must
 not be returned from an API diagnostics route.
 
+## Local object storage
+
+Local binary content uses the filesystem adapter selected by `HYMUI_STORAGE_DRIVER=filesystem`. Set
+`HYMUI_STORAGE_PATH` to its dedicated runtime directory; the development example uses
+`./.hymui/storage`, which is ignored by Git.
+
+Object keys are opaque identifiers. The adapter hashes them before resolving a filesystem path,
+streams writes through SHA-256, and verifies both byte length and checksum while reading. Metadata
+contains the content type, byte length, checksum, creation time, and original opaque key.
+
+Run the portable adapter checks with:
+
+```bash
+pnpm test:adapters
+```
+
+To reset local storage, stop Hymui first and remove only the exact configured `HYMUI_STORAGE_PATH`.
+Never point this setting at a repository root, home directory, or another shared folder.
+
 ## Troubleshooting
 
 Hymui is a pnpm workspace. Run `pnpm install`, never `npm install`. npm cannot safely manage the

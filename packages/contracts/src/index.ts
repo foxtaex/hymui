@@ -33,6 +33,22 @@ export const ServiceStateSchema = Type.Union([
 ]);
 export type ServiceState = Static<typeof ServiceStateSchema>;
 
+export const StorageAdapterKindSchema = Type.Union([
+  Type.Literal("filesystem"),
+  Type.Literal("gcs"),
+  Type.Literal("s3"),
+]);
+export type StorageAdapterKind = Static<typeof StorageAdapterKindSchema>;
+
+export const StorageHealthSchema = Type.Object(
+  {
+    kind: StorageAdapterKindSchema,
+    state: ServiceStateSchema,
+  },
+  { additionalProperties: false },
+);
+export type StorageHealth = Static<typeof StorageHealthSchema>;
+
 export const HealthResponseSchema = Type.Object(
   {
     apiVersion: Type.Literal(ApiVersion),
@@ -41,6 +57,7 @@ export const HealthResponseSchema = Type.Object(
     mode: RuntimeModeSchema,
     service: Type.Literal("api"),
     state: ServiceStateSchema,
+    storage: StorageHealthSchema,
     timestamp: DateTimeSchema,
     version: Type.Literal(HymuiVersion),
     worker: ServiceStateSchema,

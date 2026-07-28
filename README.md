@@ -287,13 +287,14 @@ cleanly.
 
 Foundation Plan 01 is implemented as a runnable monorepo. Plan 02 is in
 progress: Local now persists Actors, password-backed or account-free profiles,
-hashed sessions, and owner-authorized Projects in PGlite. Login, logout,
+hashed sessions, owner-authorized Projects in PGlite, and checksum-verified
+objects in the Local filesystem. Login, logout,
 Project creation, reload persistence, and the Web → API → Worker diagnostic are
 covered by automated integration and browser tests. Diagnostic jobs retain
 their correlation ID and recover from an expired Worker lease after restart.
 
-Object-storage adapters, server database adapters, federation, and production
-deployment tooling intentionally remain later slices.
+Cloud object-storage adapters, server database adapters, federation, and
+production deployment tooling intentionally remain later slices.
 
 Developer setup and verification are documented in
 [`docs/development.md`](./docs/development.md). Self-hosting, backups, updates,

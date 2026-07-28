@@ -1,8 +1,13 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import type { RuntimeConfig } from "@hymui/config";
 import type { Project, ProjectList } from "@hymui/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { buildApiApp } from "../../apps/api/src/app.js";
+import { createFilesystemObjectStorage } from "../../packages/storage/src/index.js";
 
 const config: RuntimeConfig = {
   apiHost: "127.0.0.1",
@@ -22,13 +27,17 @@ const config: RuntimeConfig = {
 };
 
 let api: Awaited<ReturnType<typeof buildApiApp>>;
+let storageRoot: string;
 
 beforeAll(async () => {
-  api = await buildApiApp({ config, logger: false });
+  storageRoot = await mkdtemp(join(tmpdir(), "hymui-api-storage-"));
+  const storage = await createFilesystemObjectStorage({ rootDirectory: storageRoot });
+  api = await buildApiApp({ config, logger: false, storage });
 });
 
 afterAll(async () => {
   await api.close();
+  await rm(storageRoot, { force: true, recursive: true });
 });
 
 describe("account sessions and persistent project authorization", () => {

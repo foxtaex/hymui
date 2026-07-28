@@ -22,7 +22,7 @@ metadata and an integrity checksum.
 
 ## Current checkpoint
 
-Implementation slices 1–4 are complete for the Local/PGlite path:
+Implementation slices 1–5 are complete for the Local/PGlite path:
 
 - provider-neutral account, session, Project, job, and migration repositories
 - versioned, checksum-verified PGlite migration
@@ -35,9 +35,12 @@ Implementation slices 1–4 are complete for the Local/PGlite path:
 - durable diagnostic jobs with authenticated Worker leases
 - heartbeat, cancellation, stale-lease recovery, and duplicate-completion guards
 - persisted attempt history and correlation IDs across Worker restarts
+- local filesystem object storage with opaque hashed paths
+- streamed SHA-256 integrity checks and durable object metadata
+- idempotent object deletion and explicit unsupported signed-access behavior
 
-The complete Plan 02 remains in progress. Filesystem/object-storage adapters,
-PostgreSQL/MySQL/MariaDB adapters, and the full CI matrix are the next slices.
+The complete Plan 02 remains in progress. PostgreSQL/MySQL/MariaDB adapters,
+cloud object-storage adapters, and the full CI matrix are the next slices.
 
 ## Non-goals
 
@@ -172,6 +175,11 @@ Acceptance:
 - duplicate delivery cannot complete the same attempt twice
 
 ### PER-002.6 — Object storage adapters
+
+Progress: the Local filesystem adapter is implemented with streamed writes,
+opaque key hashing, metadata sidecars, SHA-256 verification during reads,
+idempotent deletion, and adapter contract tests. GCS and S3-compatible adapters
+remain pending.
 
 - implement a local-filesystem adapter with a configured root outside source
   control

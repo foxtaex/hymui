@@ -2633,7 +2633,7 @@ var namedMiddleware = {};
 var virtual_nuxt_node_modules_2F_cache_2Fnuxt_2F_nuxt_2Froutes_default = [{
 	name: "index",
 	path: "/",
-	component: () => import('../build/pages-BF8J8EaR.mjs')
+	component: () => import('../build/pages-DPF9yxkV.mjs')
 }];
 //#endregion
 //#region ../../node_modules/.pnpm/nuxt@4.5.0_@babel+plugin-syntax-jsx@7.29.7_@babel+core@7.29.7__@babel+plugin-syntax-typ_ab4d0e7bfd2852977fc8bd6a509aa4df/node_modules/nuxt/dist/pages/runtime/plugins/router.js

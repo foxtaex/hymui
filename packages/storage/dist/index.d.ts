@@ -29,9 +29,16 @@ interface ObjectStorage {
     signedAccess(key: string, expiresAt: Date): Promise<SignedAccess | null>;
     stat(key: string): Promise<ObjectMetadata | null>;
 }
+type StorageErrorCode = "OBJECT_CHECKSUM_MISMATCH" | "OBJECT_KEY_INVALID" | "OBJECT_NOT_FOUND" | "STORAGE_UNAVAILABLE";
 declare class StorageError extends Error {
-    readonly code: "OBJECT_CHECKSUM_MISMATCH" | "OBJECT_NOT_FOUND" | "STORAGE_UNAVAILABLE";
-    constructor(code: "OBJECT_CHECKSUM_MISMATCH" | "OBJECT_NOT_FOUND" | "STORAGE_UNAVAILABLE", message: string);
+    readonly code: StorageErrorCode;
+    constructor(code: StorageErrorCode, message: string);
 }
 
-export { type ObjectMetadata, type ObjectStorage, type PutObjectInput, type SignedAccess, type StorageAdapterKind, StorageError };
+interface FilesystemStorageOptions {
+    readonly clock?: () => Date;
+    readonly rootDirectory: string;
+}
+declare function createFilesystemObjectStorage(options: FilesystemStorageOptions): Promise<ObjectStorage>;
+
+export { type FilesystemStorageOptions, type ObjectMetadata, type ObjectStorage, type PutObjectInput, type SignedAccess, type StorageAdapterKind, StorageError, type StorageErrorCode, createFilesystemObjectStorage };

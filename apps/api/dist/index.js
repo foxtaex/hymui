@@ -92,7 +92,7 @@ function loadRuntimeConfig(service, env = process.env) {
 }
 
 // src/app.ts
-import { randomUUID as randomUUID6 } from "crypto";
+import { randomUUID as randomUUID7 } from "crypto";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 
@@ -123,6 +123,18 @@ var ServiceStateSchema = Type.Union([
   Type.Literal("degraded"),
   Type.Literal("unavailable")
 ]);
+var StorageAdapterKindSchema = Type.Union([
+  Type.Literal("filesystem"),
+  Type.Literal("gcs"),
+  Type.Literal("s3")
+]);
+var StorageHealthSchema = Type.Object(
+  {
+    kind: StorageAdapterKindSchema,
+    state: ServiceStateSchema
+  },
+  { additionalProperties: false }
+);
 var HealthResponseSchema = Type.Object(
   {
     apiVersion: Type.Literal(ApiVersion),
@@ -131,6 +143,7 @@ var HealthResponseSchema = Type.Object(
     mode: RuntimeModeSchema,
     service: Type.Literal("api"),
     state: ServiceStateSchema,
+    storage: StorageHealthSchema,
     timestamp: DateTimeSchema,
     version: Type.Literal(HymuiVersion),
     worker: ServiceStateSchema
@@ -13048,15 +13061,206 @@ var PersistenceError = class extends Error {
   code;
 };
 
+// ../../packages/storage/src/contracts.ts
+var StorageError = class extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+    this.name = "StorageError";
+  }
+  code;
+};
+
+// ../../packages/storage/src/filesystem.ts
+import { createHash as createHash2, randomUUID as randomUUID3 } from "crypto";
+import { createReadStream, createWriteStream } from "fs";
+import { access, mkdir, readFile, rename, rm, writeFile } from "fs/promises";
+import { constants } from "fs";
+import { resolve } from "path";
+import { Readable, Transform } from "stream";
+import { pipeline } from "stream/promises";
+var checksumPattern = /^sha256:[0-9a-f]{64}$/;
+function isNodeError(error, code) {
+  return error instanceof Error && "code" in error && error.code === code;
+}
+function validateKey(key) {
+  const containsControlCharacter = [...key].some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== void 0 && (codePoint <= 31 || codePoint === 127);
+  });
+  if (!key || key.length > 1024 || containsControlCharacter) {
+    throw new StorageError("OBJECT_KEY_INVALID", "Object key is invalid.");
+  }
+}
+function objectPaths(rootDirectory, key) {
+  validateKey(key);
+  const digest = createHash2("sha256").update(key, "utf8").digest("hex");
+  const directory = resolve(rootDirectory, "objects", digest.slice(0, 2), digest.slice(2, 4));
+  return {
+    data: resolve(directory, `${digest}.data`),
+    directory,
+    metadata: resolve(directory, `${digest}.json`)
+  };
+}
+function parseMetadata(value, expectedKey) {
+  if (typeof value !== "object" || value === null) {
+    throw new StorageError("STORAGE_UNAVAILABLE", "Object metadata is invalid.");
+  }
+  const candidate = value;
+  const createdAt = new Date(candidate.createdAt ?? "");
+  if (candidate.version !== 1 || candidate.key !== expectedKey || typeof candidate.byteLength !== "number" || !Number.isSafeInteger(candidate.byteLength) || candidate.byteLength < 0 || typeof candidate.checksum !== "string" || !checksumPattern.test(candidate.checksum) || typeof candidate.contentType !== "string" || !candidate.contentType || Number.isNaN(createdAt.getTime())) {
+    throw new StorageError("STORAGE_UNAVAILABLE", "Object metadata is invalid.");
+  }
+  return {
+    byteLength: candidate.byteLength,
+    checksum: candidate.checksum,
+    contentType: candidate.contentType,
+    createdAt,
+    key: expectedKey
+  };
+}
+async function readMetadata(path, key) {
+  try {
+    return parseMetadata(JSON.parse(await readFile(path, "utf8")), key);
+  } catch (error) {
+    if (isNodeError(error, "ENOENT")) return null;
+    if (error instanceof StorageError) throw error;
+    throw new StorageError("STORAGE_UNAVAILABLE", "Object metadata could not be read.");
+  }
+}
+function storageFailure(error, message) {
+  if (error instanceof StorageError) throw error;
+  throw new StorageError("STORAGE_UNAVAILABLE", message);
+}
+async function* verifiedBody(path, metadata2) {
+  const hash2 = createHash2("sha256");
+  let byteLength = 0;
+  try {
+    for await (const chunk of createReadStream(path)) {
+      const bytes = chunk;
+      hash2.update(bytes);
+      byteLength += bytes.byteLength;
+      yield new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    }
+  } catch (error) {
+    if (isNodeError(error, "ENOENT")) {
+      throw new StorageError("OBJECT_NOT_FOUND", "Object content was not found.");
+    }
+    storageFailure(error, "Object content could not be read.");
+  }
+  const checksum = `sha256:${hash2.digest("hex")}`;
+  if (checksum !== metadata2.checksum || byteLength !== metadata2.byteLength) {
+    throw new StorageError("OBJECT_CHECKSUM_MISMATCH", "Object integrity verification failed.");
+  }
+}
+async function createFilesystemObjectStorage(options) {
+  if (!options.rootDirectory.trim()) {
+    throw new StorageError("STORAGE_UNAVAILABLE", "Filesystem storage root is required.");
+  }
+  const rootDirectory = resolve(options.rootDirectory);
+  const clock = options.clock ?? (() => /* @__PURE__ */ new Date());
+  try {
+    await mkdir(resolve(rootDirectory, "objects"), { mode: 448, recursive: true });
+    await access(rootDirectory, constants.R_OK | constants.W_OK);
+  } catch (error) {
+    storageFailure(error, "Filesystem storage root is unavailable.");
+  }
+  return {
+    kind: "filesystem",
+    async delete(key) {
+      const paths = objectPaths(rootDirectory, key);
+      try {
+        await Promise.all([rm(paths.data, { force: true }), rm(paths.metadata, { force: true })]);
+      } catch (error) {
+        storageFailure(error, "Object could not be deleted.");
+      }
+    },
+    async get(key) {
+      const paths = objectPaths(rootDirectory, key);
+      const metadata2 = await readMetadata(paths.metadata, key);
+      if (!metadata2) return null;
+      try {
+        await access(paths.data, constants.R_OK);
+      } catch (error) {
+        if (isNodeError(error, "ENOENT")) {
+          throw new StorageError("OBJECT_CHECKSUM_MISMATCH", "Object content is missing.");
+        }
+        storageFailure(error, "Object content is unavailable.");
+      }
+      return { body: verifiedBody(paths.data, metadata2), metadata: metadata2 };
+    },
+    async put(input) {
+      const paths = objectPaths(rootDirectory, input.key);
+      if (!input.contentType.trim()) {
+        throw new StorageError("STORAGE_UNAVAILABLE", "Object content type is required.");
+      }
+      const temporaryId = randomUUID3();
+      const temporaryData = resolve(paths.directory, `.${temporaryId}.data.tmp`);
+      const temporaryMetadata = resolve(paths.directory, `.${temporaryId}.json.tmp`);
+      const hash2 = createHash2("sha256");
+      let byteLength = 0;
+      const checksumTransform = new Transform({
+        transform(chunk, _encoding, callback) {
+          hash2.update(chunk);
+          byteLength += chunk.byteLength;
+          callback(null, chunk);
+        }
+      });
+      try {
+        await mkdir(paths.directory, { mode: 448, recursive: true });
+        await pipeline(
+          Readable.from(input.body),
+          checksumTransform,
+          createWriteStream(temporaryData, { flags: "wx", mode: 384 })
+        );
+        const metadata2 = {
+          byteLength,
+          checksum: `sha256:${hash2.digest("hex")}`,
+          contentType: input.contentType.trim(),
+          createdAt: clock(),
+          key: input.key
+        };
+        const storedMetadata = {
+          ...metadata2,
+          createdAt: metadata2.createdAt.toISOString(),
+          version: 1
+        };
+        await writeFile(temporaryMetadata, `${JSON.stringify(storedMetadata)}
+`, {
+          encoding: "utf8",
+          flag: "wx",
+          mode: 384
+        });
+        await rename(temporaryData, paths.data);
+        await rename(temporaryMetadata, paths.metadata);
+        return metadata2;
+      } catch (error) {
+        await Promise.all([
+          rm(temporaryData, { force: true }).catch(() => void 0),
+          rm(temporaryMetadata, { force: true }).catch(() => void 0)
+        ]);
+        storageFailure(error, "Object could not be written.");
+      }
+    },
+    async signedAccess(key, expiresAt) {
+      void expiresAt;
+      return await readMetadata(objectPaths(rootDirectory, key).metadata, key) ? { kind: "unsupported" } : null;
+    },
+    async stat(key) {
+      return readMetadata(objectPaths(rootDirectory, key).metadata, key);
+    }
+  };
+}
+
 // src/app.ts
 import { Type as Type4 } from "@sinclair/typebox";
 import Fastify from "fastify";
 
 // src/routes/auth.ts
-import { randomUUID as randomUUID4 } from "crypto";
+import { randomUUID as randomUUID5 } from "crypto";
 
 // src/security.ts
-import { createHash as createHash2, randomBytes, randomUUID as randomUUID3 } from "crypto";
+import { createHash as createHash3, randomBytes, randomUUID as randomUUID4 } from "crypto";
 import { hash, verify } from "@node-rs/argon2";
 var SessionCookieName = "hymui_session";
 var SessionLifetimeSeconds = 60 * 60 * 24 * 7;
@@ -13068,7 +13272,7 @@ var passwordOptions = {
   timeCost: 2
 };
 function sessionTokenHash(token) {
-  return createHash2("sha256").update(token).digest("hex");
+  return createHash3("sha256").update(token).digest("hex");
 }
 async function hashPassword(password) {
   return hash(password, passwordOptions);
@@ -13083,7 +13287,7 @@ async function createSession(database, actorId) {
   await database.sessions.create({
     actorId,
     expiresAt,
-    id: randomUUID3(),
+    id: randomUUID4(),
     timestamp: timestamp2,
     tokenHash: sessionTokenHash(token)
   });
@@ -13188,7 +13392,7 @@ async function registerAuthRoutes(app2, database, config2) {
         const timestamp2 = /* @__PURE__ */ new Date();
         const account = await database.accounts.create({
           displayName: request.body.displayName.trim(),
-          id: randomUUID4(),
+          id: randomUUID5(),
           passwordHash: await hashPassword(request.body.password),
           timestamp: timestamp2,
           username: request.body.username.toLowerCase()
@@ -13266,7 +13470,7 @@ async function registerAuthRoutes(app2, database, config2) {
         }
         account = await database.accounts.create({
           displayName: "Local profile",
-          id: randomUUID4(),
+          id: randomUUID5(),
           passwordHash: null,
           timestamp: /* @__PURE__ */ new Date(),
           username: "local"
@@ -13323,7 +13527,7 @@ async function registerAuthRoutes(app2, database, config2) {
 }
 
 // src/routes/internal-jobs.ts
-import { createHash as createHash3, randomBytes as randomBytes2, timingSafeEqual } from "crypto";
+import { createHash as createHash4, randomBytes as randomBytes2, timingSafeEqual } from "crypto";
 import { Type as Type2 } from "@sinclair/typebox";
 var JobParamsSchema = Type2.Object(
   {
@@ -13335,7 +13539,7 @@ function errorResponse2(correlationId, code, message) {
   return { code, correlationId, message };
 }
 function tokenHash(token) {
-  return createHash3("sha256").update(token).digest("hex");
+  return createHash4("sha256").update(token).digest("hex");
 }
 function publicJob(job) {
   return {
@@ -13527,7 +13731,7 @@ async function registerInternalJobRoutes(app2, database, config2) {
 }
 
 // src/routes/projects.ts
-import { randomUUID as randomUUID5 } from "crypto";
+import { randomUUID as randomUUID6 } from "crypto";
 import { Type as Type3 } from "@sinclair/typebox";
 var ProjectParamsSchema = Type3.Object(
   {
@@ -13593,7 +13797,7 @@ async function registerProjectRoutes(app2, database) {
       }
       const project = await database.projects.create({
         ...request.body.description === void 0 ? {} : { description: request.body.description },
-        id: randomUUID5(),
+        id: randomUUID6(),
         ...links === void 0 ? {} : { links },
         name: request.body.name.trim(),
         ownerId: actor.id,
@@ -13687,6 +13891,19 @@ async function buildApiApp(options = {}) {
     );
   }
   const database = options.database ?? await createPgliteDatabase(config2.databaseUrl ? { dataDirectory: config2.databaseUrl } : {});
+  if (options.storage && options.storage.kind !== config2.storageDriver) {
+    throw new Error(
+      `Configured storage driver "${config2.storageDriver}" does not match injected adapter "${options.storage.kind}".`
+    );
+  }
+  if (!options.storage && config2.storageDriver !== "filesystem") {
+    throw new Error(
+      `Storage driver "${config2.storageDriver}" is not implemented in the current Plan 02 slice.`
+    );
+  }
+  const storage = options.storage ?? await createFilesystemObjectStorage({
+    rootDirectory: config2.storagePath ?? ".hymui/storage"
+  });
   const app2 = Fastify({ logger: options.logger ?? true }).withTypeProvider();
   await app2.register(cookie);
   await app2.register(cors, {
@@ -13745,6 +13962,10 @@ async function buildApiApp(options = {}) {
         mode: config2.mode,
         service: "api",
         state: worker === "ready" ? "ready" : "degraded",
+        storage: {
+          kind: storage.kind,
+          state: "ready"
+        },
         timestamp: (/* @__PURE__ */ new Date()).toISOString(),
         version: HymuiVersion,
         worker
@@ -13766,7 +13987,7 @@ async function buildApiApp(options = {}) {
       const correlationId = correlationIdFrom(request.headers);
       const job = await database.diagnosticJobs.create({
         correlationId,
-        id: randomUUID6(),
+        id: randomUUID7(),
         request: request.body,
         timestamp: /* @__PURE__ */ new Date()
       });

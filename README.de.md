@@ -298,14 +298,15 @@ angebaut werden.
 
 Foundation Plan 01 ist als lauffähiges Monorepo umgesetzt. Plan 02 läuft:
 Local speichert jetzt Actors, passwortgestützte oder kontofreie Profile,
-gehashte Sessions und Owner-autorisierte Projekte in PGlite. Login, Logout,
+gehashte Sessions, Owner-autorisierte Projekte in PGlite und per Prüfsumme
+verifizierte Objekte im lokalen Dateispeicher. Login, Logout,
 Projektanlage, Persistenz nach dem Neuladen und die Web → API →
 Worker-Diagnose sind durch automatisierte Integrations- und Browser-Tests
 abgedeckt. Diagnose-Jobs behalten ihre Correlation-ID und werden nach einer
 abgelaufenen Worker-Lease bei einem Neustart wiederaufgenommen.
 
-Object-Storage-Adapter, Server-Datenbankadapter, Föderation und produktive
-Deployment-Werkzeuge bleiben bewusst spätere Teilabschnitte.
+Cloud-Object-Storage-Adapter, Server-Datenbankadapter, Föderation und
+produktive Deployment-Werkzeuge bleiben bewusst spätere Teilabschnitte.
 
 Entwicklungssetup und Prüfungen sind in
 [`docs/development.md`](./docs/development.md) dokumentiert. Self-hosting,

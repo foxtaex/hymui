@@ -9,6 +9,13 @@ declare const RuntimeModeSchema: _sinclair_typebox.TUnion<[_sinclair_typebox.TLi
 type RuntimeMode = Static<typeof RuntimeModeSchema>;
 declare const ServiceStateSchema: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"ready">, _sinclair_typebox.TLiteral<"degraded">, _sinclair_typebox.TLiteral<"unavailable">]>;
 type ServiceState = Static<typeof ServiceStateSchema>;
+declare const StorageAdapterKindSchema: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"filesystem">, _sinclair_typebox.TLiteral<"gcs">, _sinclair_typebox.TLiteral<"s3">]>;
+type StorageAdapterKind = Static<typeof StorageAdapterKindSchema>;
+declare const StorageHealthSchema: _sinclair_typebox.TObject<{
+    kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"filesystem">, _sinclair_typebox.TLiteral<"gcs">, _sinclair_typebox.TLiteral<"s3">]>;
+    state: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"ready">, _sinclair_typebox.TLiteral<"degraded">, _sinclair_typebox.TLiteral<"unavailable">]>;
+}>;
+type StorageHealth = Static<typeof StorageHealthSchema>;
 declare const HealthResponseSchema: _sinclair_typebox.TObject<{
     apiVersion: _sinclair_typebox.TLiteral<"v1">;
     correlationId: _sinclair_typebox.TString;
@@ -16,6 +23,10 @@ declare const HealthResponseSchema: _sinclair_typebox.TObject<{
     mode: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"development">, _sinclair_typebox.TLiteral<"test">, _sinclair_typebox.TLiteral<"local">, _sinclair_typebox.TLiteral<"self-hosted">, _sinclair_typebox.TLiteral<"hosted">]>;
     service: _sinclair_typebox.TLiteral<"api">;
     state: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"ready">, _sinclair_typebox.TLiteral<"degraded">, _sinclair_typebox.TLiteral<"unavailable">]>;
+    storage: _sinclair_typebox.TObject<{
+        kind: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"filesystem">, _sinclair_typebox.TLiteral<"gcs">, _sinclair_typebox.TLiteral<"s3">]>;
+        state: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"ready">, _sinclair_typebox.TLiteral<"degraded">, _sinclair_typebox.TLiteral<"unavailable">]>;
+    }>;
     timestamp: _sinclair_typebox.TString;
     version: _sinclair_typebox.TLiteral<"6.0.0-dev.0">;
     worker: _sinclair_typebox.TUnion<[_sinclair_typebox.TLiteral<"ready">, _sinclair_typebox.TLiteral<"degraded">, _sinclair_typebox.TLiteral<"unavailable">]>;
@@ -179,4 +190,4 @@ declare const UpdateProjectRequestSchema: _sinclair_typebox.TObject<{
 }>;
 type UpdateProjectRequest = Static<typeof UpdateProjectRequestSchema>;
 
-export { type Actor, ActorSchema, ApiVersion, type AuthCapabilities, AuthCapabilitiesSchema, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectLink, ProjectLinkSchema, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };
+export { type Actor, ActorSchema, ApiVersion, type AuthCapabilities, AuthCapabilitiesSchema, type AuthSession, AuthSessionSchema, CorrelationIdHeader, type CreateProjectRequest, CreateProjectRequestSchema, type DiagnosticJob, type DiagnosticJobClaim, DiagnosticJobClaimSchema, type DiagnosticJobRequest, DiagnosticJobRequestSchema, DiagnosticJobSchema, type Edition, EditionSchema, type ErrorResponse, ErrorResponseSchema, type HealthResponse, HealthResponseSchema, HymuiVersion, type JobStatus, JobStatusSchema, type LoginRequest, LoginRequestSchema, type Project, type ProjectLink, ProjectLinkSchema, type ProjectList, ProjectListSchema, ProjectSchema, type RegisterRequest, RegisterRequestSchema, type RuntimeMode, RuntimeModeSchema, type ServiceState, ServiceStateSchema, type StorageAdapterKind, StorageAdapterKindSchema, type StorageHealth, StorageHealthSchema, type UpdateProjectRequest, UpdateProjectRequestSchema, UsernameSchema, type WorkerClaimRequest, WorkerClaimRequestSchema, type WorkerCompleteRequest, WorkerCompleteRequestSchema, type WorkerFailRequest, WorkerFailRequestSchema, type WorkerHeartbeatRequest, WorkerHeartbeatRequestSchema };

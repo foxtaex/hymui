@@ -1,4 +1,7 @@
+import { mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 import type { RuntimeConfig } from "@hymui/config";
 import type { DiagnosticJob, HealthResponse } from "@hymui/contracts";
@@ -7,10 +10,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApiApp } from "../../apps/api/src/app.js";
 import { buildWorkerApp } from "../../apps/worker/src/app.js";
 import { createPgliteDatabase, type HymuiDatabase } from "../../packages/db/src/index.js";
+import { createFilesystemObjectStorage } from "../../packages/storage/src/index.js";
 
 let api: Awaited<ReturnType<typeof buildApiApp>>;
 let config: RuntimeConfig;
 let database: HymuiDatabase;
+let storageRoot: string;
 let worker: ReturnType<typeof buildWorkerApp>;
 
 async function freePort(): Promise<number> {
@@ -50,7 +55,9 @@ beforeAll(async () => {
     workerUrl: `http://127.0.0.1:${workerPort}`,
   };
   database = await createPgliteDatabase();
-  api = await buildApiApp({ config, database, logger: false });
+  storageRoot = await mkdtemp(join(tmpdir(), "hymui-foundation-storage-"));
+  const storage = await createFilesystemObjectStorage({ rootDirectory: storageRoot });
+  api = await buildApiApp({ config, database, logger: false, storage });
   await api.listen({ host: config.apiHost, port: config.apiPort });
   worker = buildWorkerApp({
     apiBaseUrl: config.apiUrl,
@@ -67,6 +74,7 @@ afterAll(async () => {
   await worker.close();
   await api.close();
   await database.close();
+  await rm(storageRoot, { force: true, recursive: true });
 });
 
 describe("Foundation Web/API/Worker contracts", () => {
@@ -82,8 +90,19 @@ describe("Foundation Web/API/Worker contracts", () => {
       edition: "local",
       mode: "test",
       state: "ready",
+      storage: { kind: "filesystem", state: "ready" },
       worker: "ready",
     });
+  });
+
+  it("rejects an unavailable configured storage driver before serving traffic", async () => {
+    await expect(
+      buildApiApp({
+        config: { ...config, storageDriver: "gcs" },
+        database,
+        logger: false,
+      }),
+    ).rejects.toThrow('Storage driver "gcs" is not implemented');
   });
 
   it("rejects unauthenticated access to the internal job lease API", async () => {

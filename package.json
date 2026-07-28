@@ -28,6 +28,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:adapters": "vitest run packages/storage/src/index.test.ts packages/db/src/pglite.test.ts",
     "test:integration": "vitest run tests/integration",
     "test:browser": "playwright test",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",

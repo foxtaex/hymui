@@ -104,6 +104,18 @@ var ServiceStateSchema = Type.Union([
   Type.Literal("degraded"),
   Type.Literal("unavailable")
 ]);
+var StorageAdapterKindSchema = Type.Union([
+  Type.Literal("filesystem"),
+  Type.Literal("gcs"),
+  Type.Literal("s3")
+]);
+var StorageHealthSchema = Type.Object(
+  {
+    kind: StorageAdapterKindSchema,
+    state: ServiceStateSchema
+  },
+  { additionalProperties: false }
+);
 var HealthResponseSchema = Type.Object(
   {
     apiVersion: Type.Literal(ApiVersion),
@@ -112,6 +124,7 @@ var HealthResponseSchema = Type.Object(
     mode: RuntimeModeSchema,
     service: Type.Literal("api"),
     state: ServiceStateSchema,
+    storage: StorageHealthSchema,
     timestamp: DateTimeSchema,
     version: Type.Literal(HymuiVersion),
     worker: ServiceStateSchema
