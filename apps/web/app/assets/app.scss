@@ -150,7 +150,10 @@
 .project-archive {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-  gap: var(--space-5);
+  grid-auto-rows: 1px;
+  column-gap: var(--space-5);
+  row-gap: 1px;
+  align-items: start;
   padding: var(--space-5);
   background: var(--glass-control-fill);
   border: 1px solid var(--glass-seam);
@@ -313,6 +316,9 @@
   &--archived {
     min-height: 132px;
     opacity: 0.84;
+    transition:
+      opacity var(--motion-fast) var(--ease-out),
+      grid-row-end var(--motion-soft) var(--ease-out);
   }
 }
 

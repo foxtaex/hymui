@@ -23,6 +23,7 @@ import {
   Search,
   Trash2,
 } from "@lucide/vue";
+import { nextTick, watch } from "vue";
 
 const props = defineProps<{
   actor: AuthSession["actor"];
@@ -50,9 +51,11 @@ const emit = defineEmits<{
 const { copy, locale } = useHymuiI18n();
 const query = ref("");
 const archiveOpen = ref(false);
+const archiveGrid = ref<HTMLElement | null>(null);
 const deleteProjectId = ref<string | null>(null);
 const deleteConfirmation = ref("");
 const deleteSubmitted = ref(false);
+let archiveResizeObserver: ResizeObserver | null = null;
 
 const filteredProjects = computed(() => {
   const needle = query.value.trim().toLowerCase();
@@ -125,6 +128,46 @@ function submitDelete(project: Project): void {
     revision: project.revision,
   });
 }
+
+function updateArchiveItemSpan(item: HTMLElement): void {
+  const grid = archiveGrid.value;
+  if (!grid) return;
+
+  const gridStyle = window.getComputedStyle(grid);
+  const rowHeight = Number.parseFloat(gridStyle.gridAutoRows);
+  const rowGap = Number.parseFloat(gridStyle.rowGap);
+  const cardGap = Number.parseFloat(gridStyle.columnGap);
+  if (!rowHeight || Number.isNaN(rowGap) || Number.isNaN(cardGap)) return;
+
+  const span = Math.ceil((item.getBoundingClientRect().height + cardGap) / (rowHeight + rowGap));
+  item.style.gridRowEnd = `span ${span}`;
+}
+
+async function observeArchiveCards(): Promise<void> {
+  await nextTick();
+  archiveResizeObserver?.disconnect();
+
+  const grid = archiveGrid.value;
+  if (!grid || !archiveResizeObserver) return;
+
+  grid
+    .querySelectorAll<HTMLElement>(".project-card--archived, .project-archive__empty")
+    .forEach((item) => {
+      updateArchiveItemSpan(item);
+      archiveResizeObserver?.observe(item);
+    });
+}
+
+onMounted(() => {
+  archiveResizeObserver = new ResizeObserver((entries) => {
+    entries.forEach((entry) => updateArchiveItemSpan(entry.target as HTMLElement));
+  });
+  void observeArchiveCards();
+});
+
+watch([archiveOpen, archivedProjects], () => void observeArchiveCards(), { flush: "post" });
+
+onBeforeUnmount(() => archiveResizeObserver?.disconnect());
 </script>
 
 <template>
@@ -196,6 +239,7 @@ function submitDelete(project: Project): void {
       <Transition name="hm-depth">
         <section
           v-if="archiveOpen"
+          ref="archiveGrid"
           class="project-archive"
           :aria-label="copy.projects.archivedCount"
         >
