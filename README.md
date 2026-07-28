@@ -23,7 +23,7 @@ provides the Nuxt web shell, Fastify API, separate Worker, shared contracts,
 reusable Vue components, English/German switching, and the Liquid Glass token
 system. Plan 02 now also includes the first durable Local slice: PGlite
 migrations, owner or account-free Local identity, secure persisted sessions,
-owner-authorized Projects, and recoverable Worker jobs with persisted leases.
+owner-authorized Projects and file attachments, and recoverable Worker jobs with persisted leases.
 It is not a stable release.
 
 ## Why Hymui?

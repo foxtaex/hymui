@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import { PGlite } from "@electric-sql/pglite";
-import type { JobStatus, Project, ProjectLink } from "@hymui/contracts";
+import type { JobStatus, Project, ProjectAttachment, ProjectLink } from "@hymui/contracts";
 import { and, asc, eq, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 
@@ -13,6 +13,7 @@ import type {
   CreateAccountInput,
   CreateDiagnosticJobInput,
   CreateProjectInput,
+  CreateProjectAttachmentInput,
   CreateSessionInput,
   FailDiagnosticJobInput,
   HeartbeatDiagnosticJobInput,
@@ -20,11 +21,20 @@ import type {
   Migration,
   PersistedDiagnosticJob,
   ProjectRepository,
+  ProjectAttachmentRecord,
+  ProjectAttachmentRepository,
   SessionRecord,
   UpdateProjectInput,
 } from "./index.js";
 import { PersistenceError } from "./index.js";
-import { actors, diagnosticJobAttempts, diagnosticJobs, projects, sessions } from "./schema.js";
+import {
+  actors,
+  diagnosticJobAttempts,
+  diagnosticJobs,
+  projectAttachments,
+  projects,
+  sessions,
+} from "./schema.js";
 
 const foundationStatements = [
   `CREATE TABLE IF NOT EXISTS actors (
@@ -92,6 +102,21 @@ const projectLinksStatements = [
   `ALTER TABLE projects ADD COLUMN IF NOT EXISTS links_json text NOT NULL DEFAULT '[]'`,
 ] as const;
 
+const projectAttachmentStatements = [
+  `CREATE TABLE IF NOT EXISTS project_attachments (
+    id text PRIMARY KEY,
+    project_id text NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    object_key text NOT NULL UNIQUE,
+    file_name text NOT NULL,
+    content_type text NOT NULL,
+    byte_length integer NOT NULL,
+    checksum text NOT NULL,
+    created_at timestamptz NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS project_attachments_project_id_index
+    ON project_attachments(project_id, created_at)`,
+] as const;
+
 function migrationChecksum(statements: readonly string[]): string {
   return createHash("sha256").update(statements.join("\n-- statement --\n")).digest("hex");
 }
@@ -114,6 +139,12 @@ export const hymuiMigrations: readonly Migration[] = [
     id: "0003",
     name: "project_external_links",
     statements: projectLinksStatements,
+  },
+  {
+    checksum: migrationChecksum(projectAttachmentStatements),
+    id: "0004",
+    name: "project_attachments",
+    statements: projectAttachmentStatements,
   },
 ];
 
@@ -156,6 +187,21 @@ function projectRecord(row: typeof projects.$inferSelect): Project {
     revision: row.revision,
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function projectAttachmentRecord(
+  row: typeof projectAttachments.$inferSelect,
+): ProjectAttachmentRecord {
+  const attachment: ProjectAttachment = {
+    byteLength: row.byteLength,
+    checksum: row.checksum,
+    contentType: row.contentType,
+    createdAt: row.createdAt.toISOString(),
+    fileName: row.fileName,
+    id: row.id,
+    projectId: row.projectId,
+  };
+  return { ...attachment, objectKey: row.objectKey };
 }
 
 function diagnosticJobRecord(row: typeof diagnosticJobs.$inferSelect): PersistedDiagnosticJob {
@@ -333,6 +379,64 @@ export async function createPgliteDatabase(
     },
   };
 
+  const projectAttachmentRepository: ProjectAttachmentRepository = {
+    async create(input: CreateProjectAttachmentInput): Promise<ProjectAttachmentRecord | null> {
+      const [project] = await database
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, input.projectId), eq(projects.ownerId, input.ownerId)))
+        .limit(1);
+      if (!project) return null;
+      const [created] = await database
+        .insert(projectAttachments)
+        .values({
+          byteLength: input.byteLength,
+          checksum: input.checksum,
+          contentType: input.contentType,
+          createdAt: input.timestamp,
+          fileName: input.fileName,
+          id: input.id,
+          objectKey: input.objectKey,
+          projectId: input.projectId,
+        })
+        .returning();
+      if (!created) {
+        throw new PersistenceError("DATABASE_UNAVAILABLE", "Attachment was not created.");
+      }
+      return projectAttachmentRecord(created);
+    },
+    async delete(id: string, actorId: string): Promise<ProjectAttachmentRecord | null> {
+      const existing = await this.findById(id, actorId);
+      if (!existing) return null;
+      const [deleted] = await database
+        .delete(projectAttachments)
+        .where(eq(projectAttachments.id, id))
+        .returning();
+      return deleted ? projectAttachmentRecord(deleted) : null;
+    },
+    async findById(id: string, actorId: string): Promise<ProjectAttachmentRecord | null> {
+      const [record] = await database
+        .select({ attachment: projectAttachments })
+        .from(projectAttachments)
+        .innerJoin(projects, eq(projectAttachments.projectId, projects.id))
+        .where(and(eq(projectAttachments.id, id), eq(projects.ownerId, actorId)))
+        .limit(1);
+      return record ? projectAttachmentRecord(record.attachment) : null;
+    },
+    async listByProject(
+      projectId: string,
+      actorId: string,
+    ): Promise<readonly ProjectAttachmentRecord[]> {
+      const records = await database
+        .select({ attachment: projectAttachments })
+        .from(projectAttachments)
+        .innerJoin(projects, eq(projectAttachments.projectId, projects.id))
+        .where(and(eq(projectAttachments.projectId, projectId), eq(projects.ownerId, actorId)))
+        .orderBy(asc(projectAttachments.createdAt));
+      return records.map((record) => projectAttachmentRecord(record.attachment));
+    },
+  };
+
   return {
     accounts: {
       async count(): Promise<number> {
@@ -375,6 +479,7 @@ export async function createPgliteDatabase(
         return actor ? actorRecord(actor) : null;
       },
     },
+    attachments: projectAttachmentRepository,
     async close(): Promise<void> {
       await client.close();
     },

@@ -80,13 +80,34 @@ describe("PGlite database adapter", () => {
         timestamp,
       }),
     ).toBeNull();
+
+    const attachment = await database.attachments.create({
+      byteLength: 5,
+      checksum: `sha256:${"0".repeat(64)}`,
+      contentType: "text/plain",
+      fileName: "notes.txt",
+      id: randomUUID(),
+      objectKey: `project-attachments/${randomUUID()}`,
+      ownerId: actor.id,
+      projectId: project.id,
+      timestamp,
+    });
+    expect(attachment).toMatchObject({
+      fileName: "notes.txt",
+      projectId: project.id,
+    });
+    expect(await database.attachments.listByProject(project.id, actor.id)).toEqual([attachment]);
+    expect(await database.attachments.listByProject(project.id, outsider.id)).toEqual([]);
+    expect(await database.attachments.findById(attachment!.id, outsider.id)).toBeNull();
+    expect(await database.attachments.delete(attachment!.id, actor.id)).toEqual(attachment);
+    expect(await database.attachments.listByProject(project.id, actor.id)).toEqual([]);
   });
 
   it("applies the current migration exactly once", async () => {
     const firstStatus = await database.migrations.status();
     const secondStatus = await database.migrations.apply([]);
 
-    expect(firstStatus).toHaveLength(3);
+    expect(firstStatus).toHaveLength(4);
     expect(secondStatus).toEqual(firstStatus);
   });
 

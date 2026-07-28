@@ -238,6 +238,28 @@ export const ProjectSchema = Type.Object(
 );
 export type Project = Static<typeof ProjectSchema>;
 
+export const ProjectAttachmentSchema = Type.Object(
+  {
+    byteLength: Type.Integer({ minimum: 0 }),
+    checksum: Type.String({ pattern: "^sha256:[0-9a-f]{64}$" }),
+    contentType: Type.String({ maxLength: 255, minLength: 1 }),
+    createdAt: DateTimeSchema,
+    fileName: Type.String({ maxLength: 255, minLength: 1 }),
+    id: UuidSchema,
+    projectId: UuidSchema,
+  },
+  { additionalProperties: false },
+);
+export type ProjectAttachment = Static<typeof ProjectAttachmentSchema>;
+
+export const ProjectAttachmentListSchema = Type.Object(
+  {
+    attachments: Type.Array(ProjectAttachmentSchema),
+  },
+  { additionalProperties: false },
+);
+export type ProjectAttachmentList = Static<typeof ProjectAttachmentListSchema>;
+
 export const ProjectListSchema = Type.Object(
   {
     projects: Type.Array(ProjectSchema),

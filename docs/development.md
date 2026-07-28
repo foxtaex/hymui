@@ -132,6 +132,10 @@ Object keys are opaque identifiers. The adapter hashes them before resolving a f
 streams writes through SHA-256, and verifies both byte length and checksum while reading. Metadata
 contains the content type, byte length, checksum, creation time, and original opaque key.
 
+The Project overview can attach files up to 20 MB. The API stores only owner-authorized attachment
+metadata in PGlite; binary content stays behind the storage port. Upload, list, download, and delete
+requests all require the Project owner's persisted session.
+
 Run the portable adapter checks with:
 
 ```bash

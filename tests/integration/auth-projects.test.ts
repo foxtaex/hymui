@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { RuntimeConfig } from "@hymui/config";
-import type { Project, ProjectList } from "@hymui/contracts";
+import type {
+  Project,
+  ProjectAttachment,
+  ProjectAttachmentList,
+  ProjectList,
+} from "@hymui/contracts";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { buildApiApp } from "../../apps/api/src/app.js";
@@ -178,6 +183,61 @@ describe("account sessions and persistent project authorization", () => {
       name: "Plan 02 Updated",
       revision: 2,
     });
+  });
+
+  it("uploads, lists, downloads, and deletes an owned project attachment", async () => {
+    const content = Buffer.from("Attachment content", "utf8");
+    const uploadResponse = await api.inject({
+      headers: {
+        "content-type": "application/octet-stream",
+        cookie,
+        "x-hymui-file-content-type": "text/plain",
+        "x-hymui-file-name": encodeURIComponent("Plan notes.txt"),
+      },
+      method: "POST",
+      payload: content,
+      url: `/api/v1/projects/${project.id}/attachments`,
+    });
+    const attachment = uploadResponse.json<ProjectAttachment>();
+
+    expect(uploadResponse.statusCode).toBe(201);
+    expect(attachment).toMatchObject({
+      byteLength: content.byteLength,
+      contentType: "text/plain",
+      fileName: "Plan notes.txt",
+      projectId: project.id,
+    });
+
+    const listResponse = await api.inject({
+      headers: { cookie },
+      method: "GET",
+      url: `/api/v1/projects/${project.id}/attachments`,
+    });
+    expect(listResponse.statusCode).toBe(200);
+    expect(listResponse.json<ProjectAttachmentList>().attachments).toEqual([attachment]);
+
+    const downloadResponse = await api.inject({
+      headers: { cookie },
+      method: "GET",
+      url: `/api/v1/attachments/${attachment.id}/content`,
+    });
+    expect(downloadResponse.statusCode).toBe(200);
+    expect(downloadResponse.rawPayload).toEqual(content);
+    expect(downloadResponse.headers["content-disposition"]).toContain("Plan notes.txt");
+
+    const deleteResponse = await api.inject({
+      headers: { cookie },
+      method: "DELETE",
+      url: `/api/v1/attachments/${attachment.id}`,
+    });
+    expect(deleteResponse.statusCode).toBe(204);
+
+    const missingResponse = await api.inject({
+      headers: { cookie },
+      method: "GET",
+      url: `/api/v1/attachments/${attachment.id}/content`,
+    });
+    expect(missingResponse.statusCode).toBe(404);
   });
 
   it("archives and restores a project with revision checks", async () => {

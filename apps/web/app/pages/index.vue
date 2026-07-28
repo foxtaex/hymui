@@ -6,6 +6,8 @@ import type {
   ErrorResponse,
   HealthResponse,
   Project,
+  ProjectAttachment,
+  ProjectAttachmentList,
   ProjectLink,
   ProjectList,
 } from "@hymui/contracts";
@@ -20,6 +22,7 @@ import {
 } from "@hymui/ui";
 import { Bot, CalendarDays, Columns3, FileText, LayoutGrid, PenTool, UserRound } from "@lucide/vue";
 import { AnimatePresence, motion } from "motion-v";
+import { watch } from "vue";
 
 const { copy, locale, setLocale } = useHymuiI18n();
 const runtime = useRuntimeConfig();
@@ -45,6 +48,12 @@ const authInitializing = ref(true);
 const authSubmitting = ref(false);
 const authErrorCode = ref<AuthErrorCode | "">("");
 const projects = ref<Project[]>([]);
+const attachments = ref<ProjectAttachment[]>([]);
+const attachmentsLoading = ref(false);
+const attachmentUploading = ref(false);
+const attachmentDeletingIds = ref<string[]>([]);
+const attachmentDownloadingIds = ref<string[]>([]);
+const attachmentError = ref("");
 const selectedProjectId = ref<string | null>(null);
 const projectsLoading = ref(false);
 const projectCreating = ref(false);
@@ -191,6 +200,102 @@ async function loadProjects(): Promise<void> {
   }
 }
 
+async function loadAttachments(projectId: string): Promise<void> {
+  if (!authSession.value) return;
+  attachmentsLoading.value = true;
+  attachmentError.value = "";
+  try {
+    const response = await $fetch<ProjectAttachmentList>(
+      `${runtime.public.apiBase}/api/v1/projects/${projectId}/attachments`,
+      { credentials: "include" },
+    );
+    if (selectedProjectId.value === projectId) attachments.value = response.attachments;
+  } catch {
+    if (selectedProjectId.value === projectId) {
+      attachments.value = [];
+      attachmentError.value = copy.value.projects.attachmentLoadFailed;
+    }
+  } finally {
+    if (selectedProjectId.value === projectId) attachmentsLoading.value = false;
+  }
+}
+
+async function uploadAttachment(file: File): Promise<void> {
+  const projectId = selectedProjectId.value;
+  if (!projectId || attachmentUploading.value) return;
+  if (file.size > 20 * 1_024 * 1_024) {
+    attachmentError.value = copy.value.projects.attachmentTooLarge;
+    return;
+  }
+  attachmentUploading.value = true;
+  attachmentError.value = "";
+  try {
+    const attachment = await $fetch<ProjectAttachment>(
+      `${runtime.public.apiBase}/api/v1/projects/${projectId}/attachments`,
+      {
+        body: file,
+        credentials: "include",
+        headers: {
+          "content-type": "application/octet-stream",
+          "x-hymui-file-content-type": file.type || "application/octet-stream",
+          "x-hymui-file-name": encodeURIComponent(file.name),
+        },
+        method: "POST",
+      },
+    );
+    if (selectedProjectId.value === projectId)
+      attachments.value = [...attachments.value, attachment];
+  } catch {
+    attachmentError.value = copy.value.projects.attachmentUploadFailed;
+  } finally {
+    attachmentUploading.value = false;
+  }
+}
+
+async function downloadAttachment(attachment: ProjectAttachment): Promise<void> {
+  if (attachmentDownloadingIds.value.includes(attachment.id)) return;
+  attachmentDownloadingIds.value = [...attachmentDownloadingIds.value, attachment.id];
+  attachmentError.value = "";
+  try {
+    const body = await $fetch<Blob>(
+      `${runtime.public.apiBase}/api/v1/attachments/${attachment.id}/content`,
+      {
+        credentials: "include",
+        responseType: "blob",
+      },
+    );
+    const url = URL.createObjectURL(body);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachment.fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    attachmentError.value = copy.value.projects.attachmentDownloadFailed;
+  } finally {
+    attachmentDownloadingIds.value = attachmentDownloadingIds.value.filter(
+      (id) => id !== attachment.id,
+    );
+  }
+}
+
+async function deleteAttachment(attachment: ProjectAttachment): Promise<void> {
+  if (attachmentDeletingIds.value.includes(attachment.id)) return;
+  attachmentDeletingIds.value = [...attachmentDeletingIds.value, attachment.id];
+  attachmentError.value = "";
+  try {
+    await $fetch(`${runtime.public.apiBase}/api/v1/attachments/${attachment.id}`, {
+      credentials: "include",
+      method: "DELETE",
+    });
+    attachments.value = attachments.value.filter((item) => item.id !== attachment.id);
+  } catch {
+    attachmentError.value = copy.value.projects.attachmentDeleteFailed;
+  } finally {
+    attachmentDeletingIds.value = attachmentDeletingIds.value.filter((id) => id !== attachment.id);
+  }
+}
+
 async function initializeSession(): Promise<void> {
   authInitializing.value = true;
   const [sessionResult, capabilitiesResult] = await Promise.allSettled([
@@ -272,6 +377,7 @@ async function signOut(): Promise<void> {
   });
   authSession.value = null;
   projects.value = [];
+  attachments.value = [];
   settingsOpen.value = false;
   authErrorCode.value = "";
   await refreshAuthCapabilities();
@@ -374,6 +480,12 @@ function handleSystemThemeChange(event: MediaQueryListEvent): void {
 function openProject(project: Project): void {
   selectedProjectId.value = project.id;
 }
+
+watch(selectedProjectId, (projectId) => {
+  attachments.value = [];
+  attachmentError.value = "";
+  if (projectId) void loadAttachments(projectId);
+});
 
 function navigateTo(section: string): void {
   active.value = section;
@@ -586,11 +698,20 @@ onBeforeUnmount(() => {
         <ProjectOverview
           v-if="selectedProject"
           :actor="authSession.actor"
+          :attachment-deleting-ids="attachmentDeletingIds"
+          :attachment-downloading-ids="attachmentDownloadingIds"
+          :attachment-error="attachmentError"
+          :attachments="attachments"
+          :attachments-loading="attachmentsLoading"
+          :attachment-uploading="attachmentUploading"
           :project="selectedProject"
           :updating="updatingProjectIds.includes(selectedProject.id)"
           @archive="updateProjectArchived($event, true)"
           @back="selectedProjectId = null"
+          @delete-attachment="deleteAttachment"
+          @download-attachment="downloadAttachment"
           @edit="showProjectEditor"
+          @upload-attachment="uploadAttachment"
         />
         <ProjectsWorkspace
           v-else

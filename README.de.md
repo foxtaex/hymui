@@ -25,7 +25,7 @@ Worker, gemeinsame Verträge, wiederverwendbare Vue-Komponenten,
 Deutsch/Englisch und das Liquid-Glass-Token-System. Plan 02 ergänzt jetzt den
 ersten persistenten Local-Schnitt: PGlite-Migrationen, Owner- oder
 passwortfreies Local-Profil, sichere persistente Sessions und
-Owner-autorisierte Projekte sowie wiederaufnehmbare Worker-Jobs mit
+Owner-autorisierte Projekte mit Dateianhängen sowie wiederaufnehmbare Worker-Jobs mit
 persistenten Leases. Das ist noch keine stabile Veröffentlichung.
 
 ## Warum Hymui?

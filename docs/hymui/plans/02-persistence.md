@@ -22,7 +22,7 @@ metadata and an integrity checksum.
 
 ## Current checkpoint
 
-Implementation slices 1–5 are complete for the Local/PGlite path:
+Implementation slices 1–6 are complete for the Local/PGlite path:
 
 - provider-neutral account, session, Project, job, and migration repositories
 - versioned, checksum-verified PGlite migration
@@ -38,6 +38,9 @@ Implementation slices 1–5 are complete for the Local/PGlite path:
 - local filesystem object storage with opaque hashed paths
 - streamed SHA-256 integrity checks and durable object metadata
 - idempotent object deletion and explicit unsupported signed-access behavior
+- owner-authorized Project attachment metadata and API routes
+- Project attachment upload, listing, integrity-checked download, and deletion
+- a reusable Project attachment interface in the English and German Web app
 
 The complete Plan 02 remains in progress. PostgreSQL/MySQL/MariaDB adapters,
 cloud object-storage adapters, and the full CI matrix are the next slices.
@@ -254,9 +257,10 @@ Acceptance:
 3. Actor, account, session, and owner-authorized Project vertical slice
 4. durable diagnostic jobs and restart recovery
 5. local filesystem storage and object integrity flow
-6. PostgreSQL reference adapter and Hosted wiring
-7. Self-hosted PostgreSQL, MySQL, and MariaDB matrix
-8. cloud and S3-compatible storage adapters, diagnostics, CI, and docs
+6. Project attachment metadata, authorization, API, and Web workflow
+7. PostgreSQL reference adapter and Hosted wiring
+8. Self-hosted PostgreSQL, MySQL, and MariaDB matrix
+9. cloud and S3-compatible storage adapters, diagnostics, CI, and docs
 
 Each slice must keep the PGlite Local path buildable and verified. Add a new
 provider only after the provider-neutral contract suite is passing.

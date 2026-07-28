@@ -4,6 +4,7 @@ import type {
   DiagnosticJob,
   DiagnosticJobRequest,
   Project,
+  ProjectAttachment,
   UpdateProjectRequest,
 } from "@hymui/contracts";
 
@@ -137,8 +138,32 @@ export interface ProjectRepository {
   update(input: UpdateProjectInput): Promise<Project | null>;
 }
 
+export interface ProjectAttachmentRecord extends ProjectAttachment {
+  readonly objectKey: string;
+}
+
+export interface CreateProjectAttachmentInput {
+  readonly byteLength: number;
+  readonly checksum: string;
+  readonly contentType: string;
+  readonly fileName: string;
+  readonly id: string;
+  readonly objectKey: string;
+  readonly ownerId: string;
+  readonly projectId: string;
+  readonly timestamp: Date;
+}
+
+export interface ProjectAttachmentRepository {
+  create(input: CreateProjectAttachmentInput): Promise<ProjectAttachmentRecord | null>;
+  delete(id: string, actorId: string): Promise<ProjectAttachmentRecord | null>;
+  findById(id: string, actorId: string): Promise<ProjectAttachmentRecord | null>;
+  listByProject(projectId: string, actorId: string): Promise<readonly ProjectAttachmentRecord[]>;
+}
+
 export interface HymuiDatabase {
   readonly accounts: AccountRepository;
+  readonly attachments: ProjectAttachmentRepository;
   readonly kind: DatabaseAdapterKind;
   readonly migrations: MigrationRunner;
   readonly diagnosticJobs: DiagnosticJobRepository;

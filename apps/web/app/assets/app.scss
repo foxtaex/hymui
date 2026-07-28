@@ -312,6 +312,98 @@
       overflow-wrap: anywhere;
     }
   }
+
+  &__attachments {
+    min-height: 0;
+
+    header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+    }
+  }
+
+  &__attachment-upload {
+    justify-self: end;
+  }
+
+  &__file-input {
+    display: none;
+  }
+
+  &__attachment-error {
+    margin: 0;
+    color: var(--color-danger);
+  }
+
+  &__attachment-list {
+    display: grid;
+    padding: 0;
+    margin: 0;
+    gap: var(--space-3);
+    list-style: none;
+
+    li {
+      display: grid;
+      min-width: 0;
+      padding: var(--space-3);
+      align-items: center;
+      background: var(--glass-control-fill);
+      border: 1px solid var(--glass-seam);
+      border-radius: var(--radius-md);
+      box-shadow: var(--glass-inner-edge);
+      gap: var(--space-3);
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+  }
+
+  &__attachment-icon {
+    display: grid;
+    width: var(--size-control-sm);
+    height: var(--size-control-sm);
+    color: var(--hm-mint-subtle);
+    background: var(--glass-control-fill);
+    border-radius: var(--radius-sm);
+    place-items: center;
+  }
+
+  &__attachment-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+
+    strong,
+    small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      color: var(--color-text);
+      font-size: var(--text-caption-size);
+    }
+
+    small {
+      color: var(--color-text-muted);
+    }
+  }
+
+  &__attachment-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  &__attachment-loading {
+    display: grid;
+    gap: var(--space-3);
+
+    span {
+      height: 58px;
+      background: var(--glass-control-fill);
+      border-radius: var(--radius-md);
+      animation: hm-pulse 1.4s ease-in-out infinite alternate;
+    }
+  }
 }
 
 .feature-placeholder {
@@ -861,6 +953,15 @@
 
     &__meta {
       flex-wrap: wrap;
+    }
+
+    &__attachments header {
+      grid-template-columns: auto 1fr;
+
+      .project-overview__attachment-upload {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+      }
     }
   }
 

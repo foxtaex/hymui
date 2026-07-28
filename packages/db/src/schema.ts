@@ -40,6 +40,23 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull(),
 });
 
+export const projectAttachments = pgTable(
+  "project_attachments",
+  {
+    byteLength: integer("byte_length").notNull(),
+    checksum: text("checksum").notNull(),
+    contentType: text("content_type").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull(),
+    fileName: text("file_name").notNull(),
+    id: text("id").primaryKey(),
+    objectKey: text("object_key").notNull(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+  },
+  (table) => [uniqueIndex("project_attachments_object_key_unique").on(table.objectKey)],
+);
+
 export const diagnosticJobs = pgTable("diagnostic_jobs", {
   attempt: integer("attempt").notNull().default(0),
   claimTokenHash: text("claim_token_hash"),

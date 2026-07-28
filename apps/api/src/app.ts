@@ -22,6 +22,7 @@ import { Type } from "@sinclair/typebox";
 import Fastify, { type FastifyInstance } from "fastify";
 
 import { registerAuthRoutes } from "./routes/auth.js";
+import { ProjectAttachmentMaxBytes, registerAttachmentRoutes } from "./routes/attachments.js";
 import { registerInternalJobRoutes } from "./routes/internal-jobs.js";
 import { registerProjectRoutes } from "./routes/projects.js";
 
@@ -80,12 +81,25 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
 
   await app.register(cookie);
   await app.register(cors, {
-    allowedHeaders: ["content-type", CorrelationIdHeader],
+    allowedHeaders: [
+      "content-type",
+      CorrelationIdHeader,
+      "x-hymui-file-content-type",
+      "x-hymui-file-name",
+    ],
     credentials: true,
     exposedHeaders: [CorrelationIdHeader],
     methods: ["GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"],
     origin: true,
   });
+
+  app.addContentTypeParser(
+    "application/octet-stream",
+    { bodyLimit: ProjectAttachmentMaxBytes, parseAs: "buffer" },
+    (_request, body, done) => {
+      done(null, body);
+    },
+  );
 
   if (ownsDatabase) {
     app.addHook("onClose", async () => {
@@ -101,16 +115,27 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
   app.setErrorHandler((error, request, reply) => {
     const correlationId = correlationIdFrom(request.headers);
     const isValidationError = typeof error === "object" && error !== null && "validation" in error;
+    const isTooLarge =
+      typeof error === "object" &&
+      error !== null &&
+      "statusCode" in error &&
+      (error as { statusCode?: unknown }).statusCode === 413;
     request.log.error({ correlationId, error }, "Request failed");
     reply
-      .status(isValidationError ? 400 : 500)
+      .status(isTooLarge ? 413 : isValidationError ? 400 : 500)
       .send(
         errorResponse(
           correlationId,
-          isValidationError ? "INVALID_REQUEST" : "INTERNAL_ERROR",
-          isValidationError
-            ? "The request does not match the API contract."
-            : "The request failed.",
+          isTooLarge
+            ? "ATTACHMENT_TOO_LARGE"
+            : isValidationError
+              ? "INVALID_REQUEST"
+              : "INTERNAL_ERROR",
+          isTooLarge
+            ? "The uploaded file is too large."
+            : isValidationError
+              ? "The request does not match the API contract."
+              : "The request failed.",
         ),
       );
   });
@@ -229,6 +254,7 @@ export async function buildApiApp(options: BuildApiOptions = {}): Promise<Fastif
   );
 
   await registerAuthRoutes(app, database, config);
+  await registerAttachmentRoutes(app, database, storage);
   await registerInternalJobRoutes(app, database, config);
   await registerProjectRoutes(app, database);
 
