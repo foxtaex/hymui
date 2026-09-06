@@ -520,7 +520,8 @@
       rgb(var(--glass-base-rgb) / var(--glass-alpha-bar));
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-1), var(--glass-inner-edge);
-    backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur-bar)) saturate(var(--glass-saturation-bar))
+      brightness(var(--glass-brightness-bar));
   }
 
   &--panel {
@@ -1059,6 +1060,34 @@
 }
 
 @media (width < 640px) {
+  .hm-floating-window {
+    top: auto !important;
+    right: var(--space-5);
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    left: var(--space-5) !important;
+    width: auto !important;
+    max-width: none;
+
+    &__titlebar {
+      padding-top: 0;
+      cursor: default;
+      touch-action: auto;
+      user-select: auto;
+    }
+
+    &__drag-indicator {
+      display: none;
+    }
+
+    & &__surface.hm-liquid {
+      max-height: calc(100dvh - 104px - env(safe-area-inset-bottom));
+      background:
+        linear-gradient(145deg, var(--glass-reflection), transparent 48%),
+        rgb(var(--glass-base-rgb) / var(--glass-alpha-mobile-card));
+      border-color: color-mix(in srgb, var(--glass-seam) 84%, var(--hm-mint) 16%);
+    }
+  }
+
   .hm-app-shell {
     &__bar-wrap {
       top: var(--space-4);

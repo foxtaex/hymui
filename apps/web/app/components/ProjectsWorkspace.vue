@@ -23,7 +23,10 @@ import {
   Search,
   Trash2,
 } from "@lucide/vue";
+import { AnimatePresence, LayoutGroup, motion } from "motion-v";
 import { nextTick, watch } from "vue";
+
+const MotionPanel = motion.create(HmPanel);
 
 const props = defineProps<{
   actor: AuthSession["actor"];
@@ -214,212 +217,256 @@ onBeforeUnmount(() => archiveResizeObserver?.disconnect());
         </p>
       </Transition>
 
-      <HmButton
-        :aria-expanded="archiveOpen"
-        class="archive-row"
-        size="md"
-        variant="quiet"
-        @click="archiveOpen = !archiveOpen"
-      >
-        <template #icon>
-          <Folder :size="17" :stroke-width="1.5" />
-        </template>
-        <strong>{{ copy.projects.archive }}</strong>
-        <span>{{ copy.projects.archivedCount }} · {{ archivedProjects.length }}</span>
-        <template #trailing>
-          <ChevronRight
-            class="archive-row__chevron"
-            :class="{ 'archive-row__chevron--open': archiveOpen }"
-            :size="16"
-            :stroke-width="1.5"
-          />
-        </template>
-      </HmButton>
-
-      <Transition name="hm-depth">
-        <section
-          v-if="archiveOpen"
-          ref="archiveGrid"
-          class="project-archive"
-          :aria-label="copy.projects.archivedCount"
+      <LayoutGroup id="project-cards">
+        <HmButton
+          :aria-expanded="archiveOpen"
+          class="archive-row"
+          size="md"
+          variant="quiet"
+          @click="archiveOpen = !archiveOpen"
         >
-          <p v-if="archivedProjects.length === 0" class="project-archive__empty">
-            {{ copy.projects.archiveEmpty }}
-          </p>
-          <HmPanel
-            v-for="project in archivedProjects"
-            :key="project.id"
-            class="project-card project-card--archived"
+          <template #icon>
+            <Folder :size="17" :stroke-width="1.5" />
+          </template>
+          <strong>{{ copy.projects.archive }}</strong>
+          <span>{{ copy.projects.archivedCount }} · {{ archivedProjects.length }}</span>
+          <template #trailing>
+            <ChevronRight
+              class="archive-row__chevron"
+              :class="{ 'archive-row__chevron--open': archiveOpen }"
+              :size="16"
+              :stroke-width="1.5"
+            />
+          </template>
+        </HmButton>
+
+        <AnimatePresence :initial="false">
+          <motion.div
+            v-if="archiveOpen"
+            key="project-archive"
+            class="project-archive-stage"
+            :initial="{ height: 0, opacity: 0, y: -10 }"
+            :animate="{ height: 'auto', opacity: 1, y: 0 }"
+            :exit="{ height: 0, opacity: 0, y: -10 }"
+            :transition="{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }"
           >
-            <div class="project-card__heading">
-              <div>
-                <h2>{{ project.name }}</h2>
-                <p>{{ project.description }}</p>
-              </div>
-              <div class="project-card__actions">
-                <HmIconButton
-                  :disabled="isUpdating(project)"
-                  :label="copy.projects.restoreProject"
-                  size="sm"
-                  variant="quiet"
-                  @click="emit('restore', project)"
-                >
-                  <RotateCcw :size="15" :stroke-width="1.6" />
-                </HmIconButton>
-                <HmIconButton
-                  :disabled="isUpdating(project)"
-                  :label="copy.projects.deleteProject"
-                  size="sm"
-                  variant="danger"
-                  @click.stop="showDeleteConfirmation(project)"
-                >
-                  <Trash2 :size="15" :stroke-width="1.6" />
-                </HmIconButton>
-              </div>
-            </div>
-            <form
-              v-if="deleteProjectId === project.id"
-              class="project-card__delete-confirmation"
-              novalidate
-              @submit.prevent="submitDelete(project)"
+            <section
+              ref="archiveGrid"
+              class="project-archive"
+              :aria-label="copy.projects.archivedCount"
             >
-              <div class="project-card__delete-warning">
-                <Trash2 :size="17" :stroke-width="1.6" aria-hidden="true" />
+              <p v-if="archivedProjects.length === 0" class="project-archive__empty">
+                {{ copy.projects.archiveEmpty }}
+              </p>
+              <AnimatePresence :initial="false">
+                <MotionPanel
+                  v-for="project in archivedProjects"
+                  :key="project.id"
+                  layout
+                  :layout-id="`project-${project.id}`"
+                  class="project-card project-card--archived"
+                  :class="{ 'project-card--expanded': deleteProjectId === project.id }"
+                  :layout-dependency="deleteProjectId"
+                  :initial="{ opacity: 0, scale: 0.97, y: -8 }"
+                  :animate="{ opacity: 1, scale: 1, y: 0 }"
+                  :exit="{ opacity: 0, scale: 0.97, y: 8 }"
+                  :transition="{
+                    layout: { type: 'spring', stiffness: 360, damping: 34, mass: 0.8 },
+                    opacity: { duration: 0.18 },
+                    scale: { duration: 0.22 },
+                  }"
+                >
+                  <div class="project-card__heading">
+                    <div>
+                      <h2>{{ project.name }}</h2>
+                      <p>{{ project.description }}</p>
+                    </div>
+                    <div class="project-card__actions">
+                      <HmIconButton
+                        :disabled="isUpdating(project)"
+                        :label="copy.projects.restoreProject"
+                        size="sm"
+                        variant="quiet"
+                        @click="emit('restore', project)"
+                      >
+                        <RotateCcw :size="15" :stroke-width="1.6" />
+                      </HmIconButton>
+                      <HmIconButton
+                        :disabled="isUpdating(project)"
+                        :label="copy.projects.deleteProject"
+                        size="sm"
+                        variant="danger"
+                        @click.stop="showDeleteConfirmation(project)"
+                      >
+                        <Trash2 :size="15" :stroke-width="1.6" />
+                      </HmIconButton>
+                    </div>
+                  </div>
+                  <AnimatePresence :initial="false">
+                    <motion.form
+                      v-if="deleteProjectId === project.id"
+                      :key="`delete-${project.id}`"
+                      class="project-card__delete-confirmation"
+                      :initial="{ height: 0, opacity: 0, y: -8 }"
+                      :animate="{ height: 'auto', opacity: 1, y: 0 }"
+                      :exit="{ height: 0, opacity: 0, y: -8 }"
+                      :transition="{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }"
+                      novalidate
+                      @submit.prevent="submitDelete(project)"
+                    >
+                      <div class="project-card__delete-warning">
+                        <Trash2 :size="17" :stroke-width="1.6" aria-hidden="true" />
+                        <div>
+                          <strong>{{ copy.projects.deleteTitle }}</strong>
+                          <p>{{ copy.projects.deleteWarning }}</p>
+                        </div>
+                      </div>
+                      <p class="project-card__delete-instruction">
+                        {{ copy.projects.deleteConfirmation }}
+                        <strong>{{ project.name }}</strong>
+                      </p>
+                      <HmInput
+                        :id="`archive-delete-${project.id}`"
+                        v-model="deleteConfirmation"
+                        autocomplete="off"
+                        :disabled="isUpdating(project)"
+                        :error="
+                          deleteSubmitted && deleteConfirmation !== project.name
+                            ? copy.projects.deleteConfirmationMismatch
+                            : ''
+                        "
+                        :label="copy.projects.deleteNameLabel"
+                        :maxlength="120"
+                        required
+                      />
+                      <div class="project-card__delete-actions">
+                        <HmButton
+                          :disabled="isUpdating(project)"
+                          size="sm"
+                          variant="secondary"
+                          @click="closeDeleteConfirmation"
+                        >
+                          {{ copy.projects.cancel }}
+                        </HmButton>
+                        <HmButton
+                          :disabled="deleteConfirmation !== project.name"
+                          :loading="isUpdating(project)"
+                          size="sm"
+                          type="submit"
+                          variant="danger"
+                        >
+                          <template #icon>
+                            <Trash2 :size="15" :stroke-width="1.6" />
+                          </template>
+                          {{ copy.projects.deleteProject }}
+                        </HmButton>
+                      </div>
+                    </motion.form>
+                  </AnimatePresence>
+                  <div class="project-card__meta">
+                    <span>{{ formatProjectDate(project.updatedAt) }}</span>
+                    <span class="project-card__dot" aria-hidden="true" />
+                    <span>{{ copy.projects.revision }} {{ project.revision }}</span>
+                  </div>
+                </MotionPanel>
+              </AnimatePresence>
+            </section>
+          </motion.div>
+        </AnimatePresence>
+
+        <section class="project-grid" :aria-label="copy.projects.region">
+          <p v-if="projectsLoading" class="projects-empty">{{ copy.health.checking }}</p>
+          <div v-else-if="activeProjects.length === 0" class="projects-empty">
+            <span class="projects-empty__icon" aria-hidden="true">
+              <Folder :size="22" :stroke-width="1.5" />
+            </span>
+            <strong>{{ query ? copy.projects.emptySearch : copy.projects.emptyTitle }}</strong>
+            <p>{{ query ? copy.projects.emptySearchHint : copy.projects.empty }}</p>
+            <HmButton size="md" variant="secondary" @click="handleEmptyAction">
+              {{ query ? copy.projects.clearSearch : copy.projects.new }}
+            </HmButton>
+          </div>
+          <AnimatePresence :initial="false">
+            <MotionPanel
+              v-for="project in activeProjects"
+              :key="project.id"
+              layout
+              :layout-id="`project-${project.id}`"
+              interactive
+              class="project-card"
+              :initial="{ opacity: 0, scale: 0.97, y: 10 }"
+              :animate="{ opacity: 1, scale: 1, y: 0 }"
+              :exit="{ opacity: 0, scale: 0.97, y: -10 }"
+              :transition="{
+                layout: { type: 'spring', stiffness: 360, damping: 34, mass: 0.8 },
+                opacity: { duration: 0.18 },
+                scale: { duration: 0.22 },
+              }"
+              tabindex="0"
+              @click="emit('open', project)"
+              @keydown.enter.self="emit('open', project)"
+            >
+              <div class="project-card__heading">
                 <div>
-                  <strong>{{ copy.projects.deleteTitle }}</strong>
-                  <p>{{ copy.projects.deleteWarning }}</p>
+                  <h2>{{ project.name }}</h2>
+                  <p>{{ project.description }}</p>
+                </div>
+                <div class="project-card__actions">
+                  <HmBadge tone="accent" mono>
+                    {{ copy.projects.revision }} {{ project.revision }}
+                  </HmBadge>
+                  <HmIconButton
+                    :disabled="isUpdating(project)"
+                    :label="copy.projects.editProject"
+                    size="sm"
+                    variant="quiet"
+                    @click.stop="emit('edit', project)"
+                  >
+                    <Pencil :size="15" :stroke-width="1.6" />
+                  </HmIconButton>
+                  <HmIconButton
+                    :disabled="isUpdating(project)"
+                    :label="copy.projects.archiveProject"
+                    size="sm"
+                    variant="quiet"
+                    @click.stop="emit('archive', project)"
+                  >
+                    <Archive :size="15" :stroke-width="1.6" />
+                  </HmIconButton>
                 </div>
               </div>
-              <p class="project-card__delete-instruction">
-                {{ copy.projects.deleteConfirmation }}
-                <strong>{{ project.name }}</strong>
-              </p>
-              <HmInput
-                :id="`archive-delete-${project.id}`"
-                v-model="deleteConfirmation"
-                autocomplete="off"
-                :disabled="isUpdating(project)"
-                :error="
-                  deleteSubmitted && deleteConfirmation !== project.name
-                    ? copy.projects.deleteConfirmationMismatch
-                    : ''
-                "
-                :label="copy.projects.deleteNameLabel"
-                :maxlength="120"
-                required
-              />
-              <div class="project-card__delete-actions">
-                <HmButton
-                  :disabled="isUpdating(project)"
-                  size="sm"
-                  variant="secondary"
-                  @click="closeDeleteConfirmation"
+              <div v-if="project.links.length" class="project-card__links">
+                <a
+                  v-for="link in project.links"
+                  :key="`${link.kind}:${link.url}`"
+                  :href="link.url"
+                  rel="noreferrer"
+                  target="_blank"
+                  @click.stop
                 >
-                  {{ copy.projects.cancel }}
-                </HmButton>
-                <HmButton
-                  :disabled="deleteConfirmation !== project.name"
-                  :loading="isUpdating(project)"
-                  size="sm"
-                  type="submit"
-                  variant="danger"
-                >
-                  <template #icon>
-                    <Trash2 :size="15" :stroke-width="1.6" />
-                  </template>
-                  {{ copy.projects.deleteProject }}
-                </HmButton>
+                  <GitBranch
+                    v-if="link.kind === 'repository'"
+                    :size="14"
+                    :stroke-width="1.6"
+                    aria-hidden="true"
+                  />
+                  <ExternalLink v-else :size="14" :stroke-width="1.6" aria-hidden="true" />
+                  <span>{{ link.label }}</span>
+                </a>
               </div>
-            </form>
-            <div class="project-card__meta">
-              <span>{{ formatProjectDate(project.updatedAt) }}</span>
-              <span class="project-card__dot" aria-hidden="true" />
-              <span>{{ copy.projects.revision }} {{ project.revision }}</span>
-            </div>
-          </HmPanel>
+              <div class="project-card__meta">
+                <div class="project-card__members">
+                  <HmAvatar :name="actor.displayName" size="md" />
+                </div>
+                <span class="project-card__dot" aria-hidden="true" />
+                <span>{{ copy.projects.owner }} · @{{ actor.username }}</span>
+                <span class="project-card__dot" aria-hidden="true" />
+                <span>{{ formatProjectDate(project.updatedAt) }}</span>
+              </div>
+            </MotionPanel>
+          </AnimatePresence>
         </section>
-      </Transition>
-
-      <section class="project-grid" :aria-label="copy.projects.region">
-        <p v-if="projectsLoading" class="projects-empty">{{ copy.health.checking }}</p>
-        <div v-else-if="activeProjects.length === 0" class="projects-empty">
-          <span class="projects-empty__icon" aria-hidden="true">
-            <Folder :size="22" :stroke-width="1.5" />
-          </span>
-          <strong>{{ query ? copy.projects.emptySearch : copy.projects.emptyTitle }}</strong>
-          <p>{{ query ? copy.projects.emptySearchHint : copy.projects.empty }}</p>
-          <HmButton size="md" variant="secondary" @click="handleEmptyAction">
-            {{ query ? copy.projects.clearSearch : copy.projects.new }}
-          </HmButton>
-        </div>
-        <HmPanel
-          v-for="project in activeProjects"
-          :key="project.id"
-          interactive
-          class="project-card"
-          tabindex="0"
-          @click="emit('open', project)"
-          @keydown.enter.self="emit('open', project)"
-        >
-          <div class="project-card__heading">
-            <div>
-              <h2>{{ project.name }}</h2>
-              <p>{{ project.description }}</p>
-            </div>
-            <div class="project-card__actions">
-              <HmBadge tone="accent" mono>
-                {{ copy.projects.revision }} {{ project.revision }}
-              </HmBadge>
-              <HmIconButton
-                :disabled="isUpdating(project)"
-                :label="copy.projects.editProject"
-                size="sm"
-                variant="quiet"
-                @click.stop="emit('edit', project)"
-              >
-                <Pencil :size="15" :stroke-width="1.6" />
-              </HmIconButton>
-              <HmIconButton
-                :disabled="isUpdating(project)"
-                :label="copy.projects.archiveProject"
-                size="sm"
-                variant="quiet"
-                @click.stop="emit('archive', project)"
-              >
-                <Archive :size="15" :stroke-width="1.6" />
-              </HmIconButton>
-            </div>
-          </div>
-          <div v-if="project.links.length" class="project-card__links">
-            <a
-              v-for="link in project.links"
-              :key="`${link.kind}:${link.url}`"
-              :href="link.url"
-              rel="noreferrer"
-              target="_blank"
-              @click.stop
-            >
-              <GitBranch
-                v-if="link.kind === 'repository'"
-                :size="14"
-                :stroke-width="1.6"
-                aria-hidden="true"
-              />
-              <ExternalLink v-else :size="14" :stroke-width="1.6" aria-hidden="true" />
-              <span>{{ link.label }}</span>
-            </a>
-          </div>
-          <div class="project-card__meta">
-            <div class="project-card__members">
-              <HmAvatar :name="actor.displayName" size="md" />
-            </div>
-            <span class="project-card__dot" aria-hidden="true" />
-            <span>{{ copy.projects.owner }} · @{{ actor.username }}</span>
-            <span class="project-card__dot" aria-hidden="true" />
-            <span>{{ formatProjectDate(project.updatedAt) }}</span>
-          </div>
-        </HmPanel>
-      </section>
+      </LayoutGroup>
 
       <HmLiquidSurface level="panel" corner-module class="diagnostic-card">
         <div class="diagnostic-card__copy">
