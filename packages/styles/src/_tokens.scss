@@ -117,7 +117,10 @@
   --shadow-accent: 0 6px 18px rgb(15 191 174 / 32%);
   --edge-highlight: inset 0 1px 0 var(--color-glass-edge);
   --glass-blur-bar: 22px;
-  --glass-alpha-bar: 0.3;
+  --glass-alpha-bar: 0.58;
+  --glass-alpha-mobile-card: 0.88;
+  --glass-saturation-bar: 1.05;
+  --glass-brightness-bar: 0.62;
   --glass-blur-panel: 26px;
   --glass-alpha-panel: 0.44;
   --glass-blur-overlay: 32px;
@@ -182,6 +185,9 @@
   --glass-seam: rgb(44 106 97 / 16%);
   --glass-inner-edge: inset 0 1px 0 rgb(255 255 255 / 82%), inset 0 -1px 0 rgb(44 106 97 / 8%);
   --glass-alpha-bar: 0.46;
+  --glass-alpha-mobile-card: 0.78;
+  --glass-saturation-bar: 1.18;
+  --glass-brightness-bar: 1.02;
   --glass-alpha-panel: 0.42;
   --glass-alpha-overlay: 0.62;
   --glass-alpha-focus: 0.58;

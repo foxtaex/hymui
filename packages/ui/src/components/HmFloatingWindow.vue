@@ -92,7 +92,7 @@ function stopDragging(): void {
 }
 
 function startDragging(event: PointerEvent): void {
-  if (event.button !== 0) return;
+  if (event.button !== 0 || window.innerWidth < 640) return;
   const interactiveTarget = (event.target as HTMLElement).closest(
     "button, a, input, select, textarea, [role='button']",
   );
@@ -112,6 +112,7 @@ function startDragging(event: PointerEvent): void {
 }
 
 function onResize(): void {
+  if (window.innerWidth < 640) stopDragging();
   Object.assign(position, clampPosition(position.x, position.y));
 }
 

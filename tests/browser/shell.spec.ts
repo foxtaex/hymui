@@ -355,6 +355,34 @@ test("allows the mobile navigation to slide horizontally", async ({ page }) => {
   await expect(mobileNavigation).toBeVisible();
   const profileAction = page.getByTestId("user-settings-action");
   await profileAction.click();
+  const mobileFloatingWindow = page.locator(".hm-floating-window");
+  const mobileTitlebar = page.locator(".hm-floating-window__titlebar");
+  await expect(page.locator(".hm-floating-window__drag-indicator")).toBeHidden();
+  await expect(mobileFloatingWindow).toHaveCSS("left", "12px");
+  await expect(mobileFloatingWindow).toHaveCSS("right", "12px");
+  await expect(mobileFloatingWindow).toHaveCSS("bottom", "80px");
+  await expect(page.locator(".user-settings__panel .hm-select__trigger")).toHaveCSS(
+    "min-height",
+    "44px",
+  );
+  const mobileWindowBeforeDrag = await mobileFloatingWindow.boundingBox();
+  const mobileDragArea = await mobileTitlebar.boundingBox();
+  if (!mobileWindowBeforeDrag || !mobileDragArea) {
+    throw new Error("Mobile settings window is not measurable");
+  }
+  await page.mouse.move(
+    mobileDragArea.x + mobileDragArea.width / 2,
+    mobileDragArea.y + mobileDragArea.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    mobileDragArea.x + mobileDragArea.width / 2 - 50,
+    mobileDragArea.y + mobileDragArea.height / 2 - 30,
+  );
+  await page.mouse.up();
+  const mobileWindowAfterDrag = await mobileFloatingWindow.boundingBox();
+  expect(mobileWindowAfterDrag?.x).toBeCloseTo(mobileWindowBeforeDrag.x, 1);
+  expect(mobileWindowAfterDrag?.y).toBeCloseTo(mobileWindowBeforeDrag.y, 1);
   await expect(page.getByText("Desktop navigation position", { exact: true })).toBeHidden();
   await expect(page.getByRole("radio", { name: "Top" })).toBeHidden();
   await expect(mobileNavigation).toHaveCSS("bottom", "12px");

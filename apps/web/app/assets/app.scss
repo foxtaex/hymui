@@ -148,6 +148,8 @@
 }
 
 .project-archive {
+  container-name: project-archive;
+  container-type: inline-size;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   grid-auto-rows: 1px;
@@ -168,6 +170,16 @@
     color: var(--color-text-muted);
     text-align: center;
     font-size: var(--text-caption-size);
+  }
+}
+
+.project-archive-stage {
+  overflow: hidden;
+}
+
+@container project-archive (width >= 580px) {
+  .project-card--expanded {
+    grid-column: span 2;
   }
 }
 
@@ -212,6 +224,7 @@
   &__delete-confirmation {
     display: grid;
     gap: var(--space-4);
+    overflow: hidden;
     padding-top: var(--space-5);
     border-top: 1px solid color-mix(in srgb, var(--color-danger) 28%, var(--glass-seam));
   }
@@ -316,9 +329,7 @@
   &--archived {
     min-height: 132px;
     opacity: 0.84;
-    transition:
-      opacity var(--motion-fast) var(--ease-out),
-      grid-row-end var(--motion-soft) var(--ease-out);
+    transition: opacity var(--motion-fast) var(--ease-out);
   }
 }
 
@@ -992,6 +1003,74 @@
 @media (width < 640px) {
   .user-settings__appearance-row--desktop-navigation {
     display: none;
+  }
+
+  .user-settings {
+    &__panel {
+      gap: var(--space-6);
+      padding: var(--space-6);
+
+      .hm-select,
+      .hm-select__trigger {
+        width: 100%;
+      }
+
+      .hm-select__trigger,
+      .hm-segmented {
+        min-height: var(--size-control-lg);
+      }
+    }
+
+    &__field:not(&__field--stacked) {
+      align-items: stretch;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    &__field > span,
+    &__appearance-row > span {
+      color: var(--color-text);
+    }
+  }
+
+  .new-project-window,
+  .edit-project-window {
+    gap: var(--space-5);
+    padding: var(--space-5);
+    scrollbar-gutter: auto;
+
+    > .hm-floating-window__titlebar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding-bottom: var(--space-4);
+      background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-surface-solid) 88%, transparent) 65%,
+        transparent
+      );
+      backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-saturation));
+    }
+  }
+
+  .new-project-window__actions,
+  .edit-project-window__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: var(--space-5);
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-surface-solid) 92%, transparent) 70%,
+      transparent
+    );
+    backdrop-filter: blur(var(--glass-blur-overlay)) saturate(var(--glass-saturation));
+
+    .hm-button {
+      width: 100%;
+    }
   }
 
   .projects-page {
